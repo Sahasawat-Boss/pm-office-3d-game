@@ -23,7 +23,7 @@
     <div class="stat"><small>ลูกค้าพอใจ</small><b class="num" id="sStake">70</b></div>
     <div class="stat"><small>ขวัญทีม</small><b class="num" id="sMorale">75</b></div>
   </div>
-  <div class="speed"><button id="musBtn" title="เพลงพื้นหลัง">🎵</button><button id="sfxBtn" title="เสียงประกอบ">🔊</button><button id="setBtn" title="ตั้งค่า / ออกไปเมนู (Esc)">⚙️</button><span style="width:4px"></span>
+  <div class="speed"><button id="musBtn" title="เพลงพื้นหลัง">🎵</button><button id="sfxBtn" title="เสียงประกอบ">🔊</button><button id="setBtn" title="ตั้งค่า / ออกไปเมนู (Esc)">⚙️</button><button class="fsBtn" title="เต็มจอ (F)">⛶</button><span style="width:4px"></span>
     <button data-sp="0" title="หยุด (Space)">⏸</button>
     <button data-sp="1" title="ปกติ">▶</button>
     <button data-sp="2" title="เร็ว x2">⏩</button>
@@ -62,14 +62,14 @@
 
 <div id="start" class="ov">
   <div class="dlg panel">
-    <div class="hero"><h1>PM<span>Office</span>3D</h1><div class="tag">เกมจำลองการบริหารโปรเจกต์ — แจกงาน คุมงบ คุมเวลา ดูแลคน</div></div>
+    <div class="hero"><h1>PM<span>Office</span>3D</h1><div class="tag">เกมจำลองการบริหารโปรเจกต์ — แจกงาน คุมงบ คุมเวลา ดูแลคน</div><div class="acBadge hide" id="acBadge">👑 เคลียร์ครบทุกด่าน</div></div>
     <div class="how">
       <div><b>1. วางแผน</b>เกมเริ่มแบบหยุดไว้ งานที่มี 🔒 ต้องรองานก่อนหน้าเสร็จ แจกงานก่อนแล้วกด ▶</div>
       <div><b>2. แจกงาน</b>กด 🪄 แจกงานอัตโนมัติ หรือคลิกการ์ด → กดชื่อคน (ลากวางก็ได้) ทีมจะหยิบงานถัดไปเองเมื่อว่าง</div>
       <div><b>3. ดูแลคน</b>ความเครียดเต็ม = Burnout ลาพัก 2.5 วัน ใช้ 1:1 / เลี้ยงข้าว / ปิด OT ให้ถูกจังหวะ</div>
       <div><b>4. ตัดสินใจ</b>มีเหตุการณ์สุ่มเข้ามา ทุกทางเลือกมี trade-off ระหว่าง Scope–เวลา–งบ</div>
     </div>
-    <div class="tabs"><button class="tab on" data-tab="levels">🎮 เลือกด่าน</button><button class="tab" data-tab="shop">🏢 อัปเกรดออฟฟิศ</button><button class="tab" data-tab="guide">📖 วิธีเล่น</button><button class="tab" data-tab="settings">⚙️ ตั้งค่า</button><span class="coins" id="coinTxt">🪙 0</span></div>
+    <div class="tabs"><button class="tab on" data-tab="levels">🎮 เลือกด่าน</button><button class="tab" data-tab="shop">🏢 อัปเกรดออฟฟิศ</button><button class="tab" data-tab="guide">📖 วิธีเล่น</button><button class="tab" data-tab="settings">⚙️ ตั้งค่า</button><button class="tab fsBtn fsTab" title="เต็มจอ (F)">⛶ เต็มจอ</button><span class="coins" id="coinTxt">🪙 0</span></div>
     <div class="levels" id="levels"></div>
     <div id="shopPane" style="display:none"><p style="font-size:13px;opacity:.75;margin-top:10px">ได้เหรียญ 🪙 จากเกรด ดาวใหม่ และงบที่เหลือ อัปเกรดแล้วมีผลทุกด่าน และเห็นของใหม่ในออฟฟิศด้านขวา 👉</p><h4 class="thmh">🎨 สีออฟฟิศ <small>เปลี่ยนได้ฟรี</small></h4><div class="themes" id="themes"></div><div class="shopgrid" id="shop"></div></div>
     <div id="guidePane" class="guide" style="display:none">
@@ -111,10 +111,10 @@
           <li>เห็นวงเริ่มแดงให้คุย 1:1 ก่อนจะ Burnout — เสียครึ่งวันดีกว่าเสีย 2.5 วัน</li>
           <li>OT ใช้ตอนท้ายโปรเจกต์ไม่กี่วันพอ ใช้ยาวทีมพังและบั๊กเยอะ</li></ul></section>
       <section><h4>🖱️ ควบคุม</h4>
-        <p>ลากเมาส์/นิ้ว = หมุนกล้อง · ล้อเมาส์ / ปุ่ม +− = ซูม · คลิกตัวละคร = ดูรายละเอียดและงานแนะนำ · <kbd>Space</kbd> = หยุด/เล่น</p></section>
+        <p>ลากเมาส์/นิ้ว = หมุนกล้อง · ล้อเมาส์ / ปุ่ม +− = ซูม · คลิกตัวละคร = ดูรายละเอียดและงานแนะนำ · <kbd>Space</kbd> = หยุด/เล่น · <kbd>F</kbd> = เต็มจอ / ออกจากเต็มจอ</p></section>
     </div>
     <div id="setPane" style="display:none"></div>
-    <p class="hint2" style="font-size:12px;opacity:.6;margin-top:14px">ลากเมาส์/นิ้วเพื่อหมุนกล้อง · ล้อเมาส์เพื่อซูม · Space = หยุด/เล่น</p>
+    <p class="hint2" style="font-size:12px;opacity:.6;margin-top:14px">ลากเมาส์/นิ้วเพื่อหมุนกล้อง · ล้อเมาส์เพื่อซูม · Space = หยุด/เล่น · F = เต็มจอ</p>
   </div>
 </div>
 

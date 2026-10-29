@@ -31,7 +31,8 @@ const OBJ={
   morale70:{label:'ขวัญทีมตอนจบ ≥ 70',ok:()=>avgMorale()>=70},
   noExt:{label:'ไม่ขอเลื่อน Deadline',ok:()=>S.extensions===0,lock:()=>S.extensions>0}
 };
-const LOBJ={cafe:['noBurn','budget25'],shop:['bugs1','noOT'],food:['stake80','noCut'],clinic:['qual85','noBurn'],game:['morale70','budget15'],erp:['noExt','bugs2'],bank:['qual90','noBurn']};
+const LOBJ={cafe:['noBurn','budget25'],shop:['bugs1','noOT'],food:['stake80','noCut'],clinic:['qual85','noBurn'],game:['morale70','budget15'],erp:['noExt','bugs2'],bank:['qual90','noBurn'],vote:['noExt','qual85'],sat:['noCut','noBurn']};
+const allCleared=()=>LEVELS.every(L=>L.secret||(SAVE.stars[L.id]||0)&1);
 LEVELS.forEach(L=>L.obj=LOBJ[L.id]);
 const starLabels=L=>['ส่งมอบครบทุกงาน'].concat(L.obj.map(k=>OBJ[k].label));
 const popc=n=>(n&1)+((n>>1)&1)+((n>>2)&1);
@@ -231,7 +232,8 @@ const ROOM={wall:new THREE.MeshStandardMaterial({roughness:0.9}),wain:new THREE.
   mesh(RB(5.2,0.08,0.4,0.03,1),frM,null,scene,[4.6,1.36,-RZ+0.2]);   // ขอบหน้าต่าง
   const glass=new THREE.Mesh(new THREE.PlaneGeometry(4.6,2.2),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.12})); glass.position.set(4.6,2.6,-RZ+0.07); scene.add(glass);
   // นาฬิกาแขวน (เข็มเดินตามเวลาในเกม 09:00–18:00)
-  const ck=new THREE.Group(); ck.position.set(-RX+0.04,3.75,3.5); ck.rotation.y=Math.PI/2; scene.add(ck);
+  const ck=new THREE.Group(); ck.position.set(-RX+0.04,4.08,4.6);   // เหนือผนังต้นไม้ (garden Lv3: y 1.0–3.4, z 3.4–5.8)
+  ck.rotation.y=Math.PI/2; scene.add(ck);
   mesh(new THREE.CylinderGeometry(0.45,0.45,0.06,32),0xffffff,null,ck,[0,0,0.03]).rotation.x=Math.PI/2;
   mesh(new THREE.TorusGeometry(0.45,0.045,8,32),0x1d2433,null,ck,[0,0,0.06]);
   for(let i=0;i<12;i++){ const a=i/12*Math.PI*2; mesh(B(0.03,i%3?0.05:0.1,0.01),0x1d2433,null,ck,[Math.sin(a)*0.36,Math.cos(a)*0.36,0.065]).rotation.z=-a; }
@@ -348,7 +350,7 @@ function buildUpgradeDecor(){
   // garden
   const gd=ul('garden');
   const pl=(x,z,sc,col)=>{ const g=makePlant(col?1:(x>0?2:0),0xffffff); g.position.set(x,0,z); g.scale.setScalar(sc); upG.add(g); };
-  if(gd>=1){ pl(-1.4,-RZ+0.6,1.1); pl(RX-0.7,RZ-0.8,1); }
+  if(gd>=1){ pl(-1.4,-RZ+0.6,1.1); pl(RX-0.6,0.6,1); }
   if(gd>=2){ pl(-2.6,RZ-0.5,0.7,0x2f8a4d); pl(2.6,RZ-0.5,0.7,0x2f8a4d); pl(-RX+0.6,1.0,0.8); }
   if(gd>=3){ const w=new THREE.Group(); w.position.set(-RX+0.05,2.2,4.6); upG.add(w);
     mesh(B(0.1,2.4,2.4),0x2e7d47,null,w,[0,0,0]);
@@ -380,8 +382,13 @@ function buildUpgradeDecor(){
     [60,95,80,120,140].forEach((h,i)=>{ x.fillStyle=i===4?'#ff6b3d':'#14a38b'; x.fillRect(24+i*56,180-h,38,h); });
     mesh(B(0.12,1.3,2.1),0x111111,null,upG,[-RX+0.06,2.6,1.7]);
     const p=new THREE.Mesh(new THREE.PlaneGeometry(1.95,1.15),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)})); p.position.set(-RX+0.13,2.6,1.7); p.rotation.y=Math.PI/2; upG.add(p); }
-  if(cl>=2){ mesh(B(0.3,0.06,1.4),0x8a6a4a,null,upG,[-RX+0.15,1.75,3.6]);
-    [3.2,3.6,4.0].forEach((z,i)=>{ mesh(new THREE.ConeGeometry(0.1,0.3,8),0xffc53d,{metalness:0.6,roughness:0.3},upG,[-RX+0.18,1.93,z]); }); }
+  if(cl>=2){ // ชั้นถ้วยรางวัล: ผนังซ้ายหลังมุมกาแฟ (ไม่ชนผนังต้นไม้ / นาฬิกา / จอ dashboard)
+    const sz=-3.6, goldM={metalness:0.6,roughness:0.3};
+    mesh(RB(0.32,0.06,1.5,0.025,1),0x8a6a4a,null,upG,[-RX+0.16,1.75,sz]);
+    [-0.55,0.55].forEach(o=>mesh(RB(0.05,0.2,0.05,0.015,1),0x5b4332,null,upG,[-RX+0.05,1.64,sz+o]));
+    const CUP=lathe([[0,0],[0.09,0],[0.09,0.03],[0.03,0.05],[0.025,0.12],[0.04,0.14],[0.1,0.2],[0.11,0.3],[0.1,0.3],[0.09,0.21],[0,0.17]],16);
+    [[-0.45,1],[0,1.25],[0.45,0.9]].forEach(([o,sc],i)=>{ const t=mesh(CUP,i===1?0xffc53d:i?0xd8dde6:0xd08a4a,goldM,upG,[-RX+0.18,1.78,sz+o]); t.scale.setScalar(sc);
+      [-1,1].forEach(sd=>{ const hd=mesh(new THREE.TorusGeometry(0.045*sc,0.01*sc,6,12,Math.PI),i===1?0xffc53d:i?0xd8dde6:0xd08a4a,goldM,upG,[-RX+0.18,1.78+0.24*sc,sz+o+sd*0.1*sc]); hd.rotation.set(0,0,sd>0?-Math.PI/2:Math.PI/2); hd.rotation.y=Math.PI/2; }); }); }
   if(cl>=3){ const t=new THREE.Group(); t.position.set(-6.6,0,5.2); upG.add(t);
     mesh(new THREE.CylinderGeometry(0.75,0.75,0.08,24),0xffffff,null,t,[0,0.8,0]);
     mesh(new THREE.CylinderGeometry(0.08,0.12,0.8,8),0x777777,null,t,[0,0.4,0]);
@@ -1089,7 +1096,9 @@ function endGame(reason){
   const prevMask=SAVE.stars[S.L.id]||0, newMask=mask&~prevMask;
   const cGrade={S:60,A:45,B:30,C:20,D:10,F:5}[grade], cStar=popc(newMask)*25, cBudget=Math.max(0,Math.round(S.money/10000));
   const earned=cGrade+cStar+cBudget;
-  SAVE.coins+=earned; SAVE.stars[S.L.id]=prevMask|mask; persist();
+  SAVE.coins+=earned; SAVE.stars[S.L.id]=prevMask|mask;
+  const firstAll=!SAVE.allClear&&allCleared(); if(firstAll){ SAVE.allClear=true; SAVE.coins+=ALL_BONUS; }
+  persist();
   const labels=starLabels(S.L);
   const starHTML=`<div class="starrow">${labels.map((l,i)=>{ const got=mask&(1<<i), nw=newMask&(1<<i); return `<div class="star ${got?'got':''}" style="animation-delay:${i*0.15}s"><span class="s" style="animation-delay:${0.2+i*0.25}s">⭐</span><span>${l}${nw?'<span class="nw">NEW</span>':''}${!delivered&&i>0?'<br><small style="opacity:.6">ต้องส่งงานครบก่อน</small>':''}</span></div>`; }).join('')}</div>
    <div class="earn">ได้เหรียญ <b>🪙 +${earned}</b><span>เกรด ${grade} +${cGrade}</span>${cStar?`<span>ดาวใหม่ +${cStar}</span>`:''}${cBudget?`<span>งบเหลือ +${cBudget}</span>`:''}<span style="margin-left:auto">รวม 🪙 ${SAVE.coins}</span></div>`;
@@ -1115,6 +1124,21 @@ function endGame(reason){
   $('#again').onclick=()=>{ $('#end').classList.add('hide'); newGame(S.li); };
   $('#menu').onclick=()=>{ $('#end').classList.add('hide'); showStart(); };
   $('#toShop').onclick=()=>{ $('#end').classList.add('hide'); showStart('shop'); };
+  if(firstAll) setTimeout(celebrateAll,900);
+}
+
+/* ---------- all clear ---------- */
+const ALL_BONUS=200;
+function celebrateAll(){
+  const cols=[0xffc53d,0xff6b3d,0x14a38b,0x3d7bff,0xff5fa2,0xffffff];
+  for(let i=0;i<14;i++) setTimeout(()=>{ burst(new THREE.Vector3(rnd(-6,6),rnd(1.5,3.5),rnd(-3,4)),cols,50); Snd.play(i%3?'coin':'win'); },i*260);
+  const el=document.createElement('div'); el.id='allClear';
+  el.innerHTML=`<div class="ac-box"><div class="ac-rays"></div><div class="ac-trophy">🏆</div>
+    <h2>เคลียร์ครบทุกด่าน!</h2><p>คุณพาทีมส่งมอบครบทั้ง ${LEVELS.length} โปรเจกต์ — ยินดีด้วย คุณคือ <b>PM ระดับตำนาน</b></p>
+    <div class="ac-bonus">🪙 +${ALL_BONUS} โบนัสพิเศษ</div>
+    <p class="ac-unlock">🔓 ปลดล็อก <b>โปรเจกต์ลับ</b> แล้ว! ไปดูที่หน้าเลือกด่าน</p><button class="big">เยี่ยมไปเลย!</button></div>`;
+  document.body.appendChild(el);
+  el.querySelector('button').onclick=()=>el.remove();
 }
 
 /* ---------- burndown ---------- */
@@ -1409,6 +1433,27 @@ function setShadows(on){
   renderer.shadowMap.enabled=on;
   scene.traverse(o=>{ if(o.material) [].concat(o.material).forEach(mt=>mt.needsUpdate=true); });
 }
+/* ---------- fullscreen ---------- */
+const docEl=document.documentElement;
+const fsOK=!!(docEl.requestFullscreen||docEl.webkitRequestFullscreen);
+const isFS=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+function toggleFS(){
+  try{
+    if(isFS()) (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    else { const r=(docEl.requestFullscreen||docEl.webkitRequestFullscreen).call(docEl,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>hint('เบราว์เซอร์ไม่อนุญาตให้เต็มจอ',true,2200)); }
+  }catch(e){ hint('เบราว์เซอร์ไม่อนุญาตให้เต็มจอ',true,2200); }
+}
+function syncFS(){
+  const on=isFS();
+  document.querySelectorAll('.fsBtn').forEach(b=>{ b.style.display=fsOK?'':'none'; b.classList.toggle('on',on); b.title=on?'ออกจากเต็มจอ (F)':'เต็มจอ (F)'; if(b.classList.contains('fsTab')) b.textContent=on?'⛶ ออกจากเต็มจอ':'⛶ เต็มจอ'; });
+  const pane=document.querySelector('#setPane [data-opt=fs], #pauseSet [data-opt=fs]'); if(pane){ pane.classList.toggle('on',on); pane.textContent=on?'เปิด':'ปิด'; }
+  setTimeout(resize,60);
+}
+document.querySelectorAll('.fsBtn').forEach(b=>b.onclick=toggleFS);
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,syncFS));
+addEventListener('keydown',e=>{ if(e.code==='KeyF'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); toggleFS(); } });
+syncFS();
+
 function renderSettings(root=$('#setPane'),inGame=false){
   const tg=(k,on,label,sub)=>`<div class="opt"><div><h4>${label}</h4><div class="ud">${sub}</div></div><button class="tgl ${on?'on':''}" data-opt="${k}">${on?'เปิด':'ปิด'}</button></div>`;
   const nStars=LEVELS.reduce((a,L)=>a+popc(SAVE.stars[L.id]||0),0), nClear=LEVELS.filter(L=>SAVE.best[L.id]).length;
@@ -1420,6 +1465,7 @@ function renderSettings(root=$('#setPane'),inGame=false){
     ${tg('idleSnd',OPT.idleSnd,'🔔 เสียงเตือนคนว่าง','ดังเมื่อมีสมาชิกทำงานเสร็จและไม่มีงานต่อ')}
     ${tg('autoPull',OPT.autoPull,'🔁 หยิบงานเองตั้งแต่เริ่มด่าน','ปิดถ้าอยากฝึกแจกงานเองทั้งหมด (สลับได้ระหว่างเล่น)')}
     ${tg('autoPause',OPT.autoPause,'⏸️ หยุดเกมเมื่อสลับหน้าต่าง','กันเวลาเดินตอนไม่ได้ดูจอ')}
+    ${fsOK?tg('fs',isFS(),'⛶ โหมดเต็มจอ','ซ่อนแถบเบราว์เซอร์ เห็นออฟฟิศเต็มตา (กด F หรือ Esc เพื่อออก)'):''}
     ${tg('shadows',OPT.shadows,'🌗 เงาในฉาก 3D','ปิดเพื่อให้ลื่นขึ้นบนเครื่องสเปกต่ำ / มือถือ')}
     ${inGame?'':`<div class="opt danger"><div><h4>🗑️ รีเซ็ตความคืบหน้า</h4><div class="ud">ลบเหรียญ 🪙 ${SAVE.coins}, ดาว ${nStars} ดวง, ผ่านแล้ว ${nClear} ด่าน และอัปเกรดออฟฟิศทั้งหมด — ค่าตั้งในหน้านี้ไม่ถูกลบ</div></div>
       <button class="tgl rst" id="resetBtn">รีเซ็ต</button></div>`}
@@ -1429,6 +1475,7 @@ function renderSettings(root=$('#setPane'),inGame=false){
   root.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{ const k=b.dataset.opt;
     if(k==='sfx'){ Snd.init(); Snd.setSfx(!Snd.sfx); syncSoundBtns(); }
     else if(k==='mus'){ Snd.init(); Snd.setMus(!Snd.mus); syncSoundBtns(); }
+    else if(k==='fs'){ toggleFS(); return; }
     else { OPT[k]=!OPT[k]; saveOpt(); if(k==='shadows') setShadows(OPT.shadows); }
     again(); });
   if(inGame) return;
@@ -1459,7 +1506,7 @@ $('#setBtn').onclick=openPause;
 addEventListener('keydown',e=>{ if(e.code!=='Escape'||!S) return;
   if($('#pauseSet')&&!$('#modal').classList.contains('hide')) $('#pResume').click(); else openPause(); });
 function setTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  document.querySelectorAll('.tab[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   $('#levels').style.display=t==='levels'?'':'none'; $('#shopPane').style.display=t==='shop'?'':'none';
   $('#setPane').style.display=t==='settings'?'':'none'; $('#guidePane').style.display=t==='guide'?'':'none'; if(t==='settings') renderSettings();
   $('#start').classList.toggle('shop',t==='shop');
@@ -1470,15 +1517,19 @@ function setTab(t){
   camTween = t==='shop' ? {t:new THREE.Vector3(innerWidth>980?-3.2:0,0.6,0.4),z:innerWidth>980?1.15:1,az:0.78,el:0.62}
                         : {t:new THREE.Vector3(0,0.6,0.4),z:1,az:camAz,el:camEl};
 }
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+document.querySelectorAll('.tab[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function showStart(tab){
   const best=SAVE.best;
+  if(!SAVE.allClear&&allCleared()){ SAVE.allClear=true; persist(); } // เซฟเก่าที่ผ่านครบก่อนมีระบบนี้
   $('#coinTxt').textContent='🪙 '+SAVE.coins;
-  $('#levels').innerHTML=LEVELS.map((L,i)=>`<button class="lv${best[L.id]?' cleared':''}" data-li="${i}">${best[L.id]?'<div class="clearStamp">✔ ผ่านด่าน</div>':''}<div class="lvh"><span class="df" style="background:${L.dcol}">${L.diff}</span><span style="font-size:22px">${L.icon}</span></div>
+  $('#acBadge').classList.toggle('hide',!SAVE.allClear);
+  $('#levels').innerHTML=LEVELS.map((L,i)=>L.secret&&!SAVE.allClear?`<div class="lv locked"><div class="lvh"><span class="df" style="background:#1d2433">???</span><span style="font-size:22px">🔒</span></div>
+   <h3>โปรเจกต์ลับ</h3><p>เคลียร์ครบทุกด่าน (ส่งมอบงานครบ) เพื่อปลดล็อกโปรเจกต์ที่ยากที่สุดในเกม</p><div class="spec"><span>ผ่านแล้ว ${LEVELS.filter(x=>!x.secret&&(SAVE.stars[x.id]||0)&1).length}/${LEVELS.filter(x=>!x.secret).length} ด่าน</span></div></div>`
+   :`<button class="lv${best[L.id]?' cleared':''}${L.secret?' secret':''}" data-li="${i}">${best[L.id]?'<div class="clearStamp">✔ ผ่านด่าน</div>':''}<div class="lvh"><span class="df" style="background:${L.dcol}">${L.diff}</span><span style="font-size:22px">${L.icon}</span></div>
    <h3>${L.name}</h3><p>${L.desc}</p><div class="spec"><span>👥 ${L.team.length} คน</span><span>📋 ${L.tasks.length} งาน</span><span>⏳ ${L.days} วัน</span><span>💰 ${fmtK(L.budget)}</span></div>
    <div class="lvh" style="margin-top:6px"><span class="stars3">${[0,1,2].map(i=>(SAVE.stars[L.id]||0)&(1<<i)?'<b>★</b>':'★').join('')}</span><span class="best" style="margin:0">${best[L.id]?'🏆 '+best[L.id]:''}</span></div>
    <div class="objs">${starLabels(L).map((l,i)=>`<div class="${(SAVE.stars[L.id]||0)&(1<<i)?'got':''}">⭐ ${l}</div>`).join('')}</div></button>`).join('');
-  $('#levels').querySelectorAll('.lv').forEach(b=>b.onclick=()=>{ setTab('levels'); $('#start').classList.add('hide'); newGame(+b.dataset.li); });
+  $('#levels').querySelectorAll('button.lv').forEach(b=>b.onclick=()=>{ setTab('levels'); $('#start').classList.add('hide'); newGame(+b.dataset.li); });
   $('#start').classList.remove('hide');
   setTab(tab||'levels');
 }

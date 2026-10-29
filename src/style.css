@@ -302,3 +302,32 @@ body.shopmode #top,body.shopmode #board,body.shopmode #side,body.shopmode #actio
 .thm:hover{transform:translateY(-2px)}
 .thm.on{background:var(--ink);color:#fff;box-shadow:2px 2px 0 var(--orange)}
 .thm.on i{border-color:#fff}
+
+/* all clear */
+.acBadge{margin-left:auto;background:linear-gradient(135deg,#ffc53d,#ff9f1c);color:var(--ink);border:2.5px solid var(--ink);border-radius:99px;padding:4px 12px;font-family:'Kanit';font-weight:700;font-size:14px;box-shadow:var(--shadow);animation:acGlow 2s ease-in-out infinite}
+.acBadge.hide{display:none}
+#allClear{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:#1d2433aa;backdrop-filter:blur(4px);padding:16px;animation:ovIn .3s ease-out}
+.ac-box{position:relative;overflow:hidden;max-width:460px;width:100%;text-align:center;background:#fffaf0;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--shadow);padding:28px 22px 22px;animation:dlgIn .6s cubic-bezier(.2,1.4,.4,1)}
+.ac-box>*{position:relative}
+.ac-rays{position:absolute!important;left:50%;top:70px;width:520px;height:520px;margin:-260px 0 0 -260px;background:repeating-conic-gradient(#ffc53d55 0 10deg,transparent 10deg 20deg);border-radius:50%;animation:acSpin 12s linear infinite}
+.ac-trophy{font-size:84px;line-height:1;animation:acBounce 1.2s cubic-bezier(.3,1.6,.5,1) infinite alternate;filter:drop-shadow(0 6px 0 #0002)}
+.ac-box h2{font-family:'Kanit';font-size:30px;margin:10px 0 4px;background:linear-gradient(90deg,#ff6b3d,#ffc53d,#14a38b,#3d7bff,#ff6b3d);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:acShine 2.5s linear infinite}
+.ac-box p{margin:6px 0;line-height:1.55}
+.ac-bonus{display:inline-block;margin-top:8px;background:#fff;border:2.5px solid var(--ink);border-radius:99px;padding:4px 14px;font-family:'Kanit';font-weight:700;font-size:18px}
+@keyframes acSpin{to{transform:rotate(360deg)}}
+@keyframes acBounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-10px) scale(1.08) rotate(-4deg)}}
+@keyframes acShine{to{background-position:200% center}}
+@keyframes acGlow{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:var(--shadow),0 0 16px #ffc53daa}}
+
+/* secret level */
+.lv.locked{background:repeating-linear-gradient(135deg,#f3eee4 0 10px,#ebe4d6 10px 20px);opacity:.8;cursor:not-allowed;filter:grayscale(.4)}
+.lv.locked:hover{transform:none;box-shadow:var(--shadow)}
+.lv.secret{position:relative;overflow:hidden;background:linear-gradient(160deg,#1d2433,#3b1f5e 60%,#7b2cbf);color:#fff;border-color:#ffc53d;box-shadow:4px 4px 0 #ffc53d,0 0 22px #7b2cbf88}
+.lv.secret::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 65%,#fff,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent),radial-gradient(1px 1px at 10% 70%,#fff,transparent);animation:acTwinkle 2.4s ease-in-out infinite}
+.lv.secret>*{position:relative}
+.lv.secret p,.lv.secret .objs{opacity:.9}
+.lv.secret .objs .got{color:#ffc53d}
+.lv.secret .df{border:1.5px solid #ffc53d}
+.lv.secret:hover{box-shadow:6px 6px 0 #ffc53d,0 0 30px #7b2cbfaa}
+.ac-unlock{font-family:'Kanit';font-size:15px;background:#1d2433;color:#ffc53d;border-radius:10px;padding:6px 10px}
+@keyframes acTwinkle{0%,100%{opacity:.4}50%{opacity:1}}

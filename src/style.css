@@ -16,7 +16,7 @@ h1,h2,h3,h4,.num,.brand{font-family:'Kanit',sans-serif}
 .brand{font-weight:800;font-size:20px;letter-spacing:-.5px;white-space:nowrap}
 .brand span{color:var(--orange)}
 .proj{font-weight:600;font-size:13px;background:var(--ink);color:#fff;padding:3px 10px;border-radius:99px;white-space:nowrap}
-.stats{display:flex;gap:14px;flex:1;flex-wrap:wrap}
+.stats{display:flex;gap:14px;flex:1;flex-wrap:wrap;justify-content:center}
 .stat{min-width:78px}
 .stat small{display:block;font-size:11px;opacity:.65;line-height:1.1}
 .stat b{font-family:'Kanit';font-size:17px;font-weight:700;line-height:1.2}
@@ -167,6 +167,17 @@ body.shopmode #top,body.shopmode #board,body.shopmode #side,body.shopmode #actio
 .pips i{width:16px;height:6px;border-radius:3px;background:#1d243322}
 .pips i.on{background:var(--teal)}
 .buy{border:2.5px solid var(--ink);background:var(--yellow);border-radius:10px;padding:6px 10px;font-family:'Kanit';font-weight:700;font-size:14px;white-space:nowrap}
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;margin-top:12px}
+.guide section{border:2.5px solid var(--ink);border-radius:12px;padding:10px 14px;background:#fff;font-size:13px;line-height:1.6}
+.guide h4{margin:0 0 4px;font-family:'Kanit';font-size:16px}
+.guide p{margin:0}
+.guide ul,.guide ol{margin:0;padding-left:20px}
+.guide table{border-collapse:collapse;width:100%}
+.guide td{padding:3px 4px;border-top:1px dashed #1d243333;vertical-align:top}
+.guide td:first-child{font-weight:600;white-space:nowrap;padding-right:10px}
+.guide .r{display:inline-block;color:#fff;border-radius:6px;padding:0 6px;font-size:12px;font-weight:600}
+.guide .r.dev{background:var(--dev)} .guide .r.design{background:var(--design)} .guide .r.qa{background:var(--qa)}
+.guide kbd{border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:5px;padding:0 5px;font-size:11px;background:#fff}
 .opt{display:flex;align-items:center;gap:12px;justify-content:space-between;border:2.5px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fff}
 .opt h4{margin:0;font-family:'Kanit';font-size:15px}
 .opt .ud{font-size:12px;opacity:.7;margin-top:2px}
@@ -254,3 +265,40 @@ body.shopmode #top,body.shopmode #board,body.shopmode #side,body.shopmode #actio
   #hint{top:auto;bottom:92px;white-space:normal;text-align:center;border-radius:12px}
   #board.open~#hint,#side.open~#hint{display:none}
 }
+
+/* ===== motion polish ===== */
+.ov:not(.hide){animation:ovIn .25s ease-out}
+.ov:not(.hide)>.dlg{animation:dlgIn .38s cubic-bezier(.2,1.4,.4,1)}
+@keyframes ovIn{from{background:#1d243300;backdrop-filter:blur(0)}}
+@keyframes dlgIn{from{opacity:0;transform:translateY(18px) scale(.94)}}
+#levels,#shopPane,#guidePane,#setPane{animation:paneIn .3s ease-out}
+@keyframes paneIn{from{opacity:0;transform:translateY(8px)}}
+.lv,.guide section{animation:cardIn .45s cubic-bezier(.2,1.3,.4,1) backwards}
+.lv:nth-child(2),.guide section:nth-child(2){animation-delay:.04s}
+.lv:nth-child(3),.guide section:nth-child(3){animation-delay:.08s}
+.lv:nth-child(4),.guide section:nth-child(4){animation-delay:.12s}
+.lv:nth-child(5),.guide section:nth-child(5){animation-delay:.16s}
+.lv:nth-child(6),.guide section:nth-child(6){animation-delay:.2s}
+.lv:nth-child(7),.guide section:nth-child(7){animation-delay:.24s}
+.lv:nth-child(n+8),.guide section:nth-child(n+8){animation-delay:.28s}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.96)}}
+.lv{transition:transform .18s cubic-bezier(.2,1.4,.4,1),box-shadow .18s}
+.lv:active{transform:translate(1px,1px) scale(.98);box-shadow:1px 1px 0 var(--ink)}
+.lv .clearStamp{animation:stampIn .5s .35s cubic-bezier(.2,1.6,.4,1) backwards}
+@keyframes stampIn{from{opacity:0;transform:translate(-50%,-50%) rotate(-12deg) scale(2.2)}}
+.tab,.buy,.tgl,.seg button,.btn,.act,.chip{transition:transform .12s cubic-bezier(.2,1.4,.4,1),background-color .15s,color .15s}
+.tab:active,.buy:not(:disabled):active,.tgl:active,.btn:active,.act:active,.chip:active{transform:scale(.94)}
+.pop{animation:popRise 1.8s cubic-bezier(.2,1.2,.4,1) forwards}
+@keyframes popRise{0%{opacity:0;margin-top:6px;scale:.4}14%{opacity:1;margin-top:-8px;scale:1.15}24%{scale:1}100%{opacity:0;margin-top:-64px;scale:1}}
+.lbl{transition:background-color .2s,border-color .2s}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+
+/* ===== office theme picker ===== */
+.thmh{margin:12px 0 6px;font-family:'Kanit';font-size:15px}
+.thmh small{font-family:'IBM Plex Sans Thai';font-weight:400;font-size:11.5px;opacity:.6;margin-left:4px}
+.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.thm{display:flex;align-items:center;gap:7px;border:2.5px solid var(--ink);border-radius:10px;background:#fff;padding:5px 7px;font-size:12px;font-weight:600;text-align:left;transition:transform .12s cubic-bezier(.2,1.4,.4,1)}
+.thm i{width:24px;height:24px;border-radius:7px;border:2px solid var(--ink);flex-shrink:0}
+.thm:hover{transform:translateY(-2px)}
+.thm.on{background:var(--ink);color:#fff;box-shadow:2px 2px 0 var(--orange)}
+.thm.on i{border-color:#fff}

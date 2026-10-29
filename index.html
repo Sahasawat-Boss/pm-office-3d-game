@@ -23,7 +23,7 @@
     <div class="stat"><small>ลูกค้าพอใจ</small><b class="num" id="sStake">70</b></div>
     <div class="stat"><small>ขวัญทีม</small><b class="num" id="sMorale">75</b></div>
   </div>
-  <div class="speed"><button id="musBtn" title="เพลงพื้นหลัง">🎵</button><button id="sfxBtn" title="เสียงประกอบ">🔊</button><span style="width:4px"></span>
+  <div class="speed"><button id="musBtn" title="เพลงพื้นหลัง">🎵</button><button id="sfxBtn" title="เสียงประกอบ">🔊</button><button id="setBtn" title="ตั้งค่า / ออกไปเมนู (Esc)">⚙️</button><span style="width:4px"></span>
     <button data-sp="0" title="หยุด (Space)">⏸</button>
     <button data-sp="1" title="ปกติ">▶</button>
     <button data-sp="2" title="เร็ว x2">⏩</button>
@@ -69,9 +69,50 @@
       <div><b>3. ดูแลคน</b>ความเครียดเต็ม = Burnout ลาพัก 2.5 วัน ใช้ 1:1 / เลี้ยงข้าว / ปิด OT ให้ถูกจังหวะ</div>
       <div><b>4. ตัดสินใจ</b>มีเหตุการณ์สุ่มเข้ามา ทุกทางเลือกมี trade-off ระหว่าง Scope–เวลา–งบ</div>
     </div>
-    <div class="tabs"><button class="tab on" data-tab="levels">🎮 เลือกด่าน</button><button class="tab" data-tab="shop">🏢 อัปเกรดออฟฟิศ</button><button class="tab" data-tab="settings">⚙️ ตั้งค่า</button><span class="coins" id="coinTxt">🪙 0</span></div>
+    <div class="tabs"><button class="tab on" data-tab="levels">🎮 เลือกด่าน</button><button class="tab" data-tab="shop">🏢 อัปเกรดออฟฟิศ</button><button class="tab" data-tab="guide">📖 วิธีเล่น</button><button class="tab" data-tab="settings">⚙️ ตั้งค่า</button><span class="coins" id="coinTxt">🪙 0</span></div>
     <div class="levels" id="levels"></div>
-    <div id="shopPane" style="display:none"><p style="font-size:13px;opacity:.75;margin-top:10px">ได้เหรียญ 🪙 จากเกรด ดาวใหม่ และงบที่เหลือ อัปเกรดแล้วมีผลทุกด่าน และเห็นของใหม่ในออฟฟิศด้านขวา 👉</p><div class="shopgrid" id="shop"></div></div>
+    <div id="shopPane" style="display:none"><p style="font-size:13px;opacity:.75;margin-top:10px">ได้เหรียญ 🪙 จากเกรด ดาวใหม่ และงบที่เหลือ อัปเกรดแล้วมีผลทุกด่าน และเห็นของใหม่ในออฟฟิศด้านขวา 👉</p><h4 class="thmh">🎨 สีออฟฟิศ <small>เปลี่ยนได้ฟรี</small></h4><div class="themes" id="themes"></div><div class="shopgrid" id="shop"></div></div>
+    <div id="guidePane" class="guide" style="display:none">
+      <section><h4>🎯 เป้าหมาย</h4>
+        <p>คุณคือ PM ต้องพาทีมส่งงานทุกชิ้นให้ทัน <b>Deadline</b> โดย<b>งบไม่หมด</b> และทีมไม่พัง ด่านจบเมื่องานเสร็จหมด หมดเวลา หรืองบติดลบ</p></section>
+      <section><h4>🕹️ ขั้นตอนพื้นฐาน</h4>
+        <ol><li>เกมเริ่มแบบ<b>หยุดไว้</b> ใช้จังหวะนี้วางแผนก่อน</li>
+          <li>แจกงาน: <b>คลิกการ์ดงาน → กดชื่อคน</b> หรือ<b>ลากการ์ดไปวางที่ตัวละคร</b> หรือกด <b>🪄 แจกอัตโนมัติ</b></li>
+          <li>กด <b>▶</b> ให้เวลาเดิน (<b>⏩</b> = เร็ว 2 เท่า, <b>⏸</b> หรือ <kbd>Space</kbd> = หยุด)</li>
+          <li>คอยดูคนว่าง ความเครียด และเหตุการณ์สุ่ม แล้วตัดสินใจ</li></ol></section>
+      <section><h4>📋 งานบน Kanban</h4>
+        <ul><li>สีการ์ดบอกสายงาน: <span class="r dev">💻 Dev</span> <span class="r design">🎨 Design</span> <span class="r qa">🧪 QA</span></li>
+          <li><b>🔒</b> = ต้องรองานที่เป็น dependency เสร็จก่อน — เริ่มงานต้นทางก่อนเสมอ</li>
+          <li>Priority <b>H / M / L</b> — งาน H มีน้ำหนักคะแนนมากที่สุด ตัด Scope ได้เฉพาะ M/L</li>
+          <li>งานเสร็จแล้วอาจเกิด <b>🐞 บั๊ก</b> กลายเป็นงานใหม่ (เสี่ยงขึ้นถ้าทำข้ามสาย เครียดสูง หรือเปิด OT)</li></ul></section>
+      <section><h4>👥 ดูแลทีม</h4>
+        <ul><li><b>ทำงานตรงสาย</b> เร็วกว่าข้ามสายมาก (ข้ามสายช้าลง ~35% และบั๊กง่าย)</li>
+          <li>ใส่ 2 คนในงานเดียวช่วยได้ แต่ไม่ได้เร็วขึ้น 2 เท่า (เสียประสิทธิภาพจากการประสานงาน)</li>
+          <li><b>วงใต้โต๊ะ</b> คือความเครียด: เขียว → เหลือง → แดง เครียดเกิน 80 ทำงานช้าลง ถ้าเต็ม 100 = <b>😵 Burnout ลาพัก 2.5 วัน</b></li>
+          <li><b>ขวัญทีม</b> สูง = ทำงานเร็วขึ้น ขวัญตกเมื่อเครียดนาน</li>
+          <li>ป้ายส้มกะพริบ <b>"ว่าง! แจกงานเลย"</b> = มีคนนั่งว่าง เสียเงินเดือนฟรี</li></ul></section>
+      <section><h4>⚡ ปุ่มคำสั่ง (แถบล่าง)</h4>
+        <table><tr><td>🔁 หยิบงานเอง</td><td>คนว่างจะหยิบงานตรงสายถัดไปเอง (Kanban pull)</td></tr>
+          <tr><td>🔥 โหมด OT</td><td>เร็วขึ้น 40% แต่เครียดเร็วมาก + จ่ายค่าแรงเพิ่ม 30% — ใช้ช่วงสั้น ๆ</td></tr>
+          <tr><td>🗣️ คุย 1:1</td><td>เลือกคนก่อน: เครียด −28 ขวัญ +8 แต่หยุดงานครึ่งวัน (ทุก 3 วัน/คน)</td></tr>
+          <tr><td>🍕 เลี้ยงข้าวทีม</td><td>ทั้งทีมขวัญขึ้น เครียดลง ค่าใช้จ่าย ฿2,000/คน (ทุก 5 วัน)</td></tr>
+          <tr><td>🧑‍💻 จ้างฟรีแลนซ์</td><td>skill สูง สูงสุด 2 คน แต่ 2 วันแรกยัง onboard (ทำงานครึ่งเดียว)</td></tr>
+          <tr><td>✂️ ตัด Scope</td><td>ตัดงาน M/L ที่ยังไม่เริ่ม — ลูกค้าพอใจลดลง</td></tr>
+          <tr><td>📅 ขอเลื่อน +3 วัน</td><td>สูงสุด 2 ครั้ง ครั้งแรกลูกค้าพอใจ −15 ครั้งต่อไป −25</td></tr></table></section>
+      <section><h4>🎲 เหตุการณ์สุ่ม</h4>
+        <p>ลูกค้าขอเพิ่มฟีเจอร์ คนป่วย ทีมทะเลาะ บั๊กบน Production ฯลฯ เกมจะหยุดให้เลือก — <b>ทุกทางเลือกมี trade-off</b> ระหว่าง Scope–เวลา–งบ–คน และจะได้บทเรียน PM ตอนจบด่าน</p></section>
+      <section><h4>🏆 เกรด ดาว และเหรียญ</h4>
+        <ul><li>เกรด S–F คิดจาก ความครบของงาน 35% · เวลา 15% · งบ 15% · คุณภาพ 15% · ลูกค้าพอใจ 10% · ขวัญทีม 10%</li>
+          <li>แต่ละด่านมี <b>⭐ 3 ภารกิจ</b> (ดูได้บนการ์ดด่าน) ทำได้ครบ = 3 ดาว</li>
+          <li>ได้ 🪙 จากเกรด (S = 60) + ดาวใหม่ดวงละ 25 + งบที่เหลือ → เอาไป<b>อัปเกรดออฟฟิศ</b> มีผลทุกด่าน</li></ul></section>
+      <section><h4>💡 เคล็ดลับ</h4>
+        <ul><li>เริ่มงานที่<b>ปลดล็อกงานอื่นเยอะที่สุด</b>ก่อน (Critical Path)</li>
+          <li>อย่าปล่อยให้คนว่าง — วางแผนให้มีงานรอคิวตรงสายเสมอ</li>
+          <li>เห็นวงเริ่มแดงให้คุย 1:1 ก่อนจะ Burnout — เสียครึ่งวันดีกว่าเสีย 2.5 วัน</li>
+          <li>OT ใช้ตอนท้ายโปรเจกต์ไม่กี่วันพอ ใช้ยาวทีมพังและบั๊กเยอะ</li></ul></section>
+      <section><h4>🖱️ ควบคุม</h4>
+        <p>ลากเมาส์/นิ้ว = หมุนกล้อง · ล้อเมาส์ / ปุ่ม +− = ซูม · คลิกตัวละคร = ดูรายละเอียดและงานแนะนำ · <kbd>Space</kbd> = หยุด/เล่น</p></section>
+    </div>
     <div id="setPane" style="display:none"></div>
     <p class="hint2" style="font-size:12px;opacity:.6;margin-top:14px">ลากเมาส์/นิ้วเพื่อหมุนกล้อง · ล้อเมาส์เพื่อซูม · Space = หยุด/เล่น</p>
   </div>

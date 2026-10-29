@@ -377,3 +377,38 @@ body.menumode #start.shop .mhCta{display:none}
   body.menumode #start .mhCta{display:none}
 }
 @keyframes menuPanelInUp{from{opacity:0;transform:translateY(60px)}}
+
+/* ===== coach: dim screen + spotlight on ▶ ===== */
+#coach{position:fixed;inset:0;z-index:15;pointer-events:none;animation:coachIn .5s ease-out}
+#coach.hide{display:none}
+@keyframes coachIn{from{opacity:0}}
+#coach .cHole{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(15,19,30,.68);border:3px solid #ffc53d;animation:holePulse 1.2s ease-in-out infinite}
+@keyframes holePulse{0%,100%{outline:0 solid rgba(255,197,61,.8);outline-offset:0}50%{outline:8px solid rgba(255,197,61,0);outline-offset:6px}}
+#coach .cTip{position:fixed;display:flex;flex-direction:column;align-items:flex-end;gap:2px;background:var(--paper);border:2.5px solid var(--ink);border-radius:14px;padding:10px 14px;box-shadow:4px 4px 0 var(--ink);max-width:min(340px,calc(100vw - 20px));text-align:right;animation:tipIn .5s .15s cubic-bezier(.2,1.4,.4,1) backwards}
+@keyframes tipIn{from{opacity:0;transform:translateY(14px) scale(.9)}}
+#coach .cTip b{font-family:'Kanit';font-size:17px}
+#coach .cTip span{font-size:13px;opacity:.8;line-height:1.45}
+#coach .cHand{position:absolute;top:-46px;right:4px;font-size:34px;animation:handPoke .9s ease-in-out infinite;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.35))}
+@keyframes handPoke{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+#coach .cTip.alignL{align-items:flex-start;text-align:left}
+#coach .cTip.alignL .cHand{right:auto;left:4px}
+
+/* ===== tour (step-by-step guide) ===== */
+#coach .cTip span{white-space:pre-line}
+#coach.tour{pointer-events:auto}
+#coach.tour .cTip{pointer-events:auto;align-items:stretch;text-align:left;max-width:min(400px,calc(100vw - 20px));min-width:min(320px,calc(100vw - 20px));padding:14px 16px}
+#coach.tour .cTip b{font-size:19px}
+#coach.tour .cTip span{font-size:13.5px;opacity:.85;line-height:1.6;margin-top:4px}
+#coach.center .cTip{max-width:min(460px,calc(100vw - 20px));padding:20px 22px}
+#coach.center .cTip b{font-size:24px}
+#coach.center .cHole{border:0;animation:none}
+#coach.tour .cHole{transition:left .35s ease,top .35s ease,width .35s ease,height .35s ease}
+.cNav{display:flex;align-items:center;gap:6px;margin-top:12px}
+.cNav:empty{display:none}
+.cNav .dots{display:flex;gap:4px;margin-right:auto;align-items:center}
+.cNav .dots i{width:7px;height:7px;border-radius:9px;background:#d9cdb8;transition:width .25s,background .25s}
+.cNav .dots i.on{background:var(--orange);width:18px}
+.cNav button{border:2px solid var(--ink);border-radius:9px;padding:6px 12px;font-family:'Kanit';font-weight:700;font-size:13px;background:#fff;white-space:nowrap}
+.cNav button.next{background:var(--orange);color:#fff;box-shadow:2px 2px 0 var(--ink)}
+.cNav button.skip{border:0;background:none;opacity:.55;font-weight:500;padding:6px 4px}
+.cNav button:active{transform:scale(.95)}

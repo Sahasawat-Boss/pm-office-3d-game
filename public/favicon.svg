@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- PM Office 3D: กล่องไอโซเมตริก (ออฟฟิศ 3D) บนพื้นครีม ขอบหมึก -->
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="#fff6e6" stroke="#1d2433" stroke-width="5"/>
+  <path d="M32 12 L51 23 L32 34 L13 23 Z" fill="#ffc53d" stroke="#1d2433" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M13 23 L32 34 L32 54 L13 43 Z" fill="#ff6b3d" stroke="#1d2433" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M51 23 L32 34 L32 54 L51 43 Z" fill="#14a38b" stroke="#1d2433" stroke-width="3.5" stroke-linejoin="round"/>
+</svg>

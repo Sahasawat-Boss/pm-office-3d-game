@@ -6,7 +6,7 @@ import { Snd } from './audio.js';
 
 /* ================= SETTINGS (แยก key จาก save — Reset Progress ไม่ล้างค่าตั้ง) ================= */
 const OPT_KEY='pmoffice3d-opt';
-const OPT=Object.assign({pace:'normal',theme:'cream',autoPull:true,shadows:true,autoPause:true,idleSnd:true},(()=>{ try{ return JSON.parse(localStorage.getItem(OPT_KEY)||'{}'); }catch(e){ return {}; } })());
+const OPT=Object.assign({pace:'normal',theme:'cream',tutorial:true,autoPull:true,shadows:true,autoPause:true,idleSnd:true},(()=>{ try{ return JSON.parse(localStorage.getItem(OPT_KEY)||'{}'); }catch(e){ return {}; } })());
 function saveOpt(){ try{ localStorage.setItem(OPT_KEY,JSON.stringify(OPT)); }catch(e){} }
 const PACE={slow:{sec:6.5,th:'ช้า'},normal:{sec:4.5,th:'ปกติ'},fast:{sec:3,th:'เร็ว'}};
 const daySec=()=>(PACE[OPT.pace]||PACE.normal).sec;
@@ -788,7 +788,8 @@ function newGame(li){
   S.log=[]; log('🚀 เริ่มโปรเจกต์ "'+L.name+'" — วางแผนก่อนแล้วกด ▶');
   pmTarget.set(-5.5,0,-4.2);
   setSpeed(0);
-  hint('👉 กด 🪄 แจกงานอัตโนมัติ (หรือเลือกเอง) แล้วกด ▶ เพื่อเริ่ม');
+  hint('');
+  if(OPT.tutorial){ const s0=S; setTimeout(()=>{ if(S===s0&&!S.ended&&S.t===0) startTour(); },450); }
   updateUI(true);
 }
 
@@ -1583,6 +1584,7 @@ function renderSettings(root=$('#setPane'),inGame=false){
     ${tg('mus',Snd.mus,'🎵 เพลงพื้นหลัง','เพลง lo-fi ระหว่างเล่น')}
     ${tg('idleSnd',OPT.idleSnd,'🔔 เสียงเตือนคนว่าง','ดังเมื่อมีสมาชิกทำงานเสร็จและไม่มีงานต่อ')}
     ${tg('autoPull',OPT.autoPull,'🔁 หยิบงานเองตั้งแต่เริ่มด่าน','ปิดถ้าอยากฝึกแจกงานเองทั้งหมด (สลับได้ระหว่างเล่น)')}
+    ${tg('tutorial',OPT.tutorial,'🎓 บทสอนตอนเริ่มด่าน','แสดงวิธีเล่นทีละขั้นเมื่อเริ่มด่าน (ปิดให้เองหลังดูจบ)')}
     ${tg('autoPause',OPT.autoPause,'⏸️ หยุดเกมเมื่อสลับหน้าต่าง','กันเวลาเดินตอนไม่ได้ดูจอ')}
     ${fsOK?tg('fs',isFS(),'⛶ โหมดเต็มจอ','ซ่อนแถบเบราว์เซอร์ เห็นออฟฟิศเต็มตา (กด F หรือ Esc เพื่อออก)'):''}
     ${tg('shadows',OPT.shadows,'🌗 เงาในฉาก 3D','ปิดเพื่อให้ลื่นขึ้นบนเครื่องสเปกต่ำ / มือถือ')}
@@ -1654,6 +1656,127 @@ function showStart(tab){
   setMenu(true);
   setTab(tab||'levels');
 }
+/* ---------- coach: หรี่จอ + ส่องไฟชี้จุดที่ผู้เล่นควรทำ ----------
+   1) เข้าด่านแล้วไม่กด ▶            → ชี้ปุ่มเล่น (ครั้งเดียวต่อด่าน)
+   2) มีคนว่างทั้งที่ยังมีงานรอ นานเกิน 1 วัน → ชี้ป้ายชื่อคนนั้น (สูงสุด 3 ครั้ง/ด่าน)  */
+const COACH_IDLE=8000;          // (1) ไม่ได้แตะอะไรกี่ ms ถึงขึ้น
+const COACH_IDLE_DAYS=1;        // (2) ว่างนานกี่วันในเกมถึงขึ้น
+const COACH_IDLE_GAP=4;         // (2) เว้นระยะระหว่างครั้งกี่วันในเกม
+const COACH_IDLE_MAX=3;
+const COACH_QUIET=2500;         // (2) ต้องไม่ได้แตะจอมาอย่างน้อยกี่ ms (กันขึ้นตอนกำลังจัดการอยู่)
+const coach=document.createElement('div'); coach.id='coach'; coach.className='hide';
+coach.innerHTML='<div class="cHole"></div><div class="cTip"><div class="cHand">👆</div><b id="cTitle"></b><span id="cSub"></span><div class="cNav" id="cNav"></div></div>';
+document.body.appendChild(coach);
+let lastInput=performance.now(), coachS=null, coachTarget=null, coachKind=null, playCoachDone=false, idleCoachN=0, idleCoachT=-99;
+const coachOn=()=>!coach.classList.contains('hide');
+function placeCoach(){
+  const hole=coach.querySelector('.cHole'), tip=coach.querySelector('.cTip'), hand=coach.querySelector('.cHand');
+  if(coachKind==='tour'&&!coachTarget){ // การ์ดกลางจอ
+    Object.assign(hole.style,{left:innerWidth/2+'px',top:innerHeight/2+'px',width:'0px',height:'0px'});
+    Object.assign(tip.style,{left:Math.max(10,(innerWidth-tip.offsetWidth)/2)+'px',top:Math.max(10,(innerHeight-tip.offsetHeight)/2)+'px',right:'',bottom:''});
+    hand.style.display='none'; return; }
+  if(!coachTarget||!coachTarget.isConnected){ hideCoach(); return; }
+  hand.style.display=''; Object.assign(hand.style,{left:'',right:'',marginTop:''});
+  const r=coachTarget.getBoundingClientRect(), pad=8;
+  Object.assign(hole.style,{left:(r.left-pad)+'px',top:(r.top-pad)+'px',width:(r.width+pad*2)+'px',height:(r.height+pad*2)+'px'});
+  if(r.height>innerHeight*0.45){ // เป้าสูง (แผงข้าง) → วางกล่องไว้ข้าง ๆ
+    const onRight=r.left+r.width/2>innerWidth/2;
+    tip.style.top=Math.max(10,Math.min(innerHeight-tip.offsetHeight-10,r.top+r.height/2-tip.offsetHeight/2))+'px'; tip.style.bottom='';
+    tip.style.right=onRight?(innerWidth-r.left+pad+30)+'px':''; tip.style.left=onRight?'':(r.right+pad+30)+'px';
+    tip.classList.toggle('alignL',!onRight);
+    hand.textContent=onRight?'👉':'👈';
+    Object.assign(hand.style,{top:'50%',bottom:'',marginTop:'-22px',left:onRight?'':'-46px',right:onRight?'-46px':''});
+    return; }
+  const below=r.bottom+170<innerHeight, right=r.left+r.width/2>innerWidth/2;
+  tip.style.top=below?(r.bottom+pad+18)+'px':''; tip.style.bottom=below?'':(innerHeight-r.top+pad+18)+'px';
+  tip.style.right=right?Math.max(10,innerWidth-r.right-pad-6)+'px':''; tip.style.left=right?'':Math.max(10,r.left-pad-6)+'px';
+  tip.classList.toggle('alignL',!right);
+  hand.textContent=below?'👆':'👇'; hand.style.top=below?'-46px':''; hand.style.bottom=below?'':'-46px';
+}
+function showCoach(el,kind,title,sub){
+  coachTarget=el; coachKind=kind; $('#cTitle').textContent=title; $('#cSub').textContent=sub; $('#cNav').innerHTML='';
+  coach.classList.remove('hide'); placeCoach(); Snd.play('select');
+  (function follow(){ if(!coachOn()) return; placeCoach(); requestAnimationFrame(follow); })();   // ป้ายชื่อขยับตามกล้อง/ตัวละคร
+}
+function hideCoach(){ if(!coachOn()) return; coach.classList.add('hide'); if(coachKind==='play') playCoachDone=true; coachTarget=null; }
+['pointerdown','keydown','wheel'].forEach(ev=>addEventListener(ev,()=>{ lastInput=performance.now(); if(coachKind!=='tour') hideCoach(); },{capture:true,passive:true}));
+setInterval(()=>{
+  if(S!==coachS){ coachS=S; playCoachDone=false; idleCoachN=0; idleCoachT=-99; lastInput=performance.now(); }
+  if(coachKind==='tour') return;
+  const live=S&&!S.ended&&!S.modal&&$('#start').classList.contains('hide')&&$('#end').classList.contains('hide');
+  if(!live){ hideCoach(); return; }
+  const quiet=performance.now()-lastInput;
+  // (1) ยังไม่เริ่มเวลา
+  if(S.t===0&&S.speed===0){
+    if(!playCoachDone&&!coachOn()&&quiet>COACH_IDLE)
+      showCoach($('.speed button[data-sp="1"]'),'play','⏰ เวลายังไม่เดิน!',S.autoPull?'กด ▶ เพื่อเริ่มโปรเจกต์ — ทีมจะหยิบงานตรงสายเองทันที':'แจกงานให้ทีมก่อน แล้วกด ▶ เพื่อเริ่มโปรเจกต์');
+    return;
+  }
+  if(coachKind==='play') hideCoach();
+  // (2) คนว่างงานทั้งที่ยังมีงานให้ทำ
+  const free=freeTasks();
+  S.members.forEach(m=>{ const idle=!m.task&&m.offUntil<=S.t&&m.busyUntil<=S.t&&free.length;
+    if(idle){ if(m._idleSince==null) m._idleSince=S.t; } else m._idleSince=null; });
+  if(coachOn()){ if(coachKind==='idle'&&coachTarget&&coachTarget._m&&coachTarget._m._idleSince==null) hideCoach(); return; }
+  if(S.speed===0||idleCoachN>=COACH_IDLE_MAX||S.t-idleCoachT<COACH_IDLE_GAP||quiet<COACH_QUIET) return;
+  const m=S.members.filter(x=>x._idleSince!=null&&S.t-x._idleSince>=COACH_IDLE_DAYS).sort((a,b)=>a._idleSince-b._idleSince)[0];
+  if(!m) return;
+  idleCoachN++; idleCoachT=S.t; m.lbl._m=m;
+  const fit=free.some(t=>t.type===m.role);
+  showCoach(m.lbl,'idle','☕ '+m.name+' ว่างงานมา '+(S.t-m._idleSince).toFixed(1)+' วันแล้ว!',
+    fit?'ยังมีงาน '+ROLES[m.role].th+' รออยู่ — คลิกการ์ดงานแล้วกดชื่อ '+m.name+' (หรือลากการ์ดมาวาง) หรือกด 🪄 แจกอัตโนมัติ'
+       :'ไม่มีงานตรงสายเหลือ — คลิกที่ '+m.name+' แล้วเลือกงานข้ามสาย (ช้ากว่า แต่ดีกว่าจ่ายเงินเดือนให้นั่งว่าง)');
+},400);
+
+/* ---------- tour: บทสอนเล่นทีละขั้นตอนเริ่มด่าน (แทน hint เดิม) ---------- */
+let tourSteps=null, tourI=0;
+function startTour(){
+  const L=S.L;
+  tourSteps=[
+    {t:null,title:'👋 ยินดีต้อนรับ PM คนใหม่!',sub:`โปรเจกต์ "${L.name}"\nทีม ${L.team.length} คน · ${L.tasks.length} งาน · ${L.days} วัน · งบ ${fmtK(L.budget)}\n\nภารกิจของคุณ: ส่งงานให้ครบทันเวลา งบไม่หมด และทีมไม่พัง\nมาดูวิธีเล่นสั้น ๆ กัน — เวลาในเกมหยุดรอไว้ให้แล้ว`},
+    {t:'#board',alt:'#aBoard',title:'📋 Kanban — งานทั้งหมดอยู่ที่นี่',sub:'สีการ์ดบอกสายงาน: 💻 Dev · 🎨 Design · 🧪 QA\n🔒 = ต้องรองานก่อนหน้าเสร็จก่อน\n\nมอบงาน: คลิกการ์ด → กดชื่อคน หรือลากการ์ดไปวางที่ตัวละคร'},
+    {t:'#autoBtn',title:'🪄 แจกงานอัตโนมัติ',sub:'กดปุ่มเดียว ทุกคนที่ว่างจะได้งานที่ตรงสายทันที — เหมาะกับการเริ่มต้น'},
+    {t:'#side',alt:'#aTeam',title:'👥 ทีมของคุณ',sub:'ดูขวัญและความเครียดของแต่ละคน\nเครียดเต็ม 100 = 😵 Burnout ลาพัก 2.5 วัน\n\nคลิกชื่อหรือตัวละครเพื่อดูรายละเอียดและงานแนะนำ'},
+    {t:'#top .stats',title:'📊 ตัวชี้วัดโปรเจกต์',sub:'วันที่ · งบ · ความคืบหน้า · คุณภาพ · ลูกค้าพอใจ · ขวัญทีม\nเกรดตอนจบ (S–F) คิดจากทั้งหมดนี้'},
+    {t:'#actions',title:'⚡ ปุ่มคำสั่ง PM',sub:'OT เร่งงาน · คุย 1:1 · เลี้ยงข้าว · จ้างฟรีแลนซ์ · ตัด Scope · ขอเลื่อน\nทุกปุ่มมีข้อแลกเปลี่ยน ใช้ให้ถูกจังหวะ'},
+    {t:'.speed button[data-sp="1"]',title:'▶ พร้อมแล้ว เริ่มเลย!',sub:'แจกงานให้เรียบร้อย แล้วกด ▶ ให้เวลาเดิน\n⏩ = เร็ว 2 เท่า · Space = หยุด/เล่น\n\nระหว่างเล่นจะมีเหตุการณ์สุ่มให้ตัดสินใจ — โชคดี!'}
+  ];
+  // จอแคบ: แผง Kanban/ทีมถูกซ่อน → ชี้ปุ่มเปิดแผงแทน, ขั้นที่ไม่มีเป้าให้ข้าม
+  const vis=sel=>{ const e=$(sel); return e&&e.getClientRects().length>0; };
+  tourSteps=tourSteps.map(st=>!st.t||vis(st.t)?st:(st.alt&&vis(st.alt)?Object.assign({},st,{t:st.alt}):null)).filter(Boolean);
+  tourI=0; S.modal=true; setSpeed(0); coachKind='tour'; coach.classList.add('tour');
+  showTourStep();
+  (function follow(){ if(coachKind!=='tour') return; placeCoach(); requestAnimationFrame(follow); })();
+}
+function showTourStep(){
+  const st=tourSteps[tourI], last=tourI===tourSteps.length-1;
+  coachTarget=st.t?$(st.t):null; coach.classList.toggle('center',!st.t);
+  $('#cTitle').textContent=st.title; $('#cSub').textContent=st.sub;
+  $('#cNav').innerHTML=(last?'':'<button class="skip" data-tv="skip">ข้าม</button>')
+    +'<span class="dots">'+tourSteps.map((_,i)=>'<i class="'+(i===tourI?'on':'')+'"></i>').join('')+'</span>'
+    +(tourI?'<button data-tv="back">← ย้อน</button>':'')
+    +'<button class="next" data-tv="next">'+(last?'เข้าใจแล้ว เริ่มเลย ✓':tourI?'ถัดไป →':'เริ่มดูวิธีเล่น →')+'</button>';
+  $('#cNav').querySelectorAll('[data-tv]').forEach(b=>b.onclick=()=>tourGo(b.dataset.tv));
+  const tip=coach.querySelector('.cTip'); tip.style.animation='none'; void tip.offsetWidth; tip.style.animation='';
+  coach.classList.remove('hide'); placeCoach();
+}
+function tourGo(a){
+  if(a==='next'&&tourI<tourSteps.length-1){ tourI++; Snd.play('click'); showTourStep(); }
+  else if(a==='back'&&tourI>0){ tourI--; Snd.play('click'); showTourStep(); }
+  else if(a==='next'||a==='skip') endTour();
+}
+function endTour(){
+  coach.classList.add('hide'); coach.classList.remove('tour','center'); coachKind=null; coachTarget=null; tourSteps=null;
+  if(S&&!S.ended){ S.modal=false; setSpeed(0); }
+  lastInput=performance.now(); Snd.play('assign');
+  if(OPT.tutorial){ OPT.tutorial=false; saveOpt(); hint('🎓 ดูบทสอนอีกครั้งได้ที่ ⚙️ ตั้งค่า → บทสอนตอนเริ่มด่าน',false,3500); }
+}
+addEventListener('keydown',e=>{ if(coachKind!=='tour') return;
+  if(e.code==='ArrowRight'||e.code==='Enter'){ e.preventDefault(); tourGo('next'); }
+  else if(e.code==='ArrowLeft'){ e.preventDefault(); tourGo('back'); }
+  else if(e.code==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); tourGo('skip'); } },true);
+addEventListener('resize',()=>{ if(coachKind==='tour') placeCoach(); });
+
 drawWhiteboard();
 buildUpgradeDecor();
 showStart();

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PM Office 3D — เกมฝึกบริหารโปรเจกต์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="labels"></div>
+<div id="ghost"></div>
+
+<div id="top" class="panel">
+  <div class="brand">PM<span>Office</span>3D</div>
+  <div class="proj" id="projName">—</div>
+  <div class="stats">
+    <div class="stat"><small>วันที่</small><b class="num" id="sDay">1/16</b><div class="mini"><i id="sDayBar"></i></div></div>
+    <div class="stat"><small>งบคงเหลือ</small><b class="num" id="sMoney">฿0</b><div class="mini"><i id="sMoneyBar"></i></div></div>
+    <div class="stat"><small>ความคืบหน้า</small><b class="num" id="sProg">0%</b><div class="mini"><i id="sProgBar"></i></div></div>
+    <div class="stat"><small>คุณภาพ</small><b class="num" id="sQual">80</b></div>
+    <div class="stat"><small>ลูกค้าพอใจ</small><b class="num" id="sStake">70</b></div>
+    <div class="stat"><small>ขวัญทีม</small><b class="num" id="sMorale">75</b></div>
+  </div>
+  <div class="speed"><button id="musBtn" title="เพลงพื้นหลัง">🎵</button><button id="sfxBtn" title="เสียงประกอบ">🔊</button><span style="width:4px"></span>
+    <button data-sp="0" title="หยุด (Space)">⏸</button>
+    <button data-sp="1" title="ปกติ">▶</button>
+    <button data-sp="2" title="เร็ว x2">⏩</button>
+  </div>
+</div>
+
+
+<aside id="board" class="panel">
+  <div class="ph"><h3>📋 Kanban <span id="idleBadge"></span></h3><button class="btn" id="autoBtn" title="ให้ทุกคนที่ว่างรับงานที่ตรงสายงานทันที">🪄 แจกอัตโนมัติ</button></div><div id="objBox"></div><div class="meta" style="margin:-2px 0 4px">คลิกการ์ด → กดชื่อคน · หรือลากการ์ดไปวางที่ตัวละคร</div>
+  <div class="scroll" id="boardList"></div>
+</aside>
+
+<aside id="side" class="panel">
+  <div id="selCard"></div>
+  <div class="ph" style="margin:0"><h3>👥 ทีม</h3><small id="burnRate"></small></div>
+  <div class="scroll" id="teamList"></div>
+</aside>
+
+<div id="hint"></div>
+
+<div id="zoom"><button id="zIn" title="ซูมเข้า">+</button><button id="zOut" title="ซูมออก">−</button></div>
+
+<div id="actions" class="panel">
+  <button class="act mob" id="aBoard"><span class="e">📋</span><span class="l">งาน</span><span class="c">Kanban</span></button>
+  <button class="act mob" id="aTeam"><span class="e">👥</span><span class="l">ทีม</span><span class="c">สมาชิก</span></button>
+  <button class="act on" id="aPull" title="เมื่อใครว่าง จะหยิบงานถัดไปที่ตรงสายงานเอง (Kanban pull system)"><span class="e">🔁</span><span class="l">หยิบงานเอง</span><span class="c" id="pullTxt">เปิดอยู่</span></button>
+  <button class="act" id="aOT" title="ทีมทำงานเร็วขึ้น 40% แต่เครียดเร็วมาก + ค่าแรง OT"><span class="e">🔥</span><span class="l">โหมด OT</span><span class="c">เร็ว +40% / เครียด↑↑</span></button>
+  <button class="act" id="a11" title="คุยกับคนที่เลือก: ลดความเครียด เพิ่มขวัญ แต่เขาหยุดงานครึ่งวัน"><span class="e">🗣️</span><span class="l">คุย 1:1</span><span class="c">เลือกคนก่อน</span></button>
+  <button class="act" id="aLunch" title="เลี้ยงข้าวทีม: ขวัญ↑ เครียด↓"><span class="e">🍕</span><span class="l">เลี้ยงข้าวทีม</span><span class="c" id="lunchCost">฿6,000</span></button>
+  <button class="act" id="aHire" title="จ้างฟรีแลนซ์ skill 4 (สูงสุด 2 คน) — 2 วันแรกยัง onboard"><span class="e">🧑‍💻</span><span class="l">จ้างฟรีแลนซ์</span><span class="c">฿15k + ฿7k/วัน</span></button>
+  <button class="act" id="aCut" title="ตัดงาน Priority M/L ที่ยังไม่เริ่มออกจาก scope"><span class="e">✂️</span><span class="l">ตัด Scope</span><span class="c">ลูกค้าพอใจ↓</span></button>
+  <button class="act" id="aExt" title="ขอเลื่อน deadline +3 วัน (สูงสุด 2 ครั้ง)"><span class="e">📅</span><span class="l">ขอเลื่อน +3 วัน</span><span class="c" id="extCost">ลูกค้าพอใจ −15</span></button>
+</div>
+
+<div id="modal" class="ov hide"><div class="dlg panel" id="modalBody"></div></div>
+
+<div id="start" class="ov">
+  <div class="dlg panel">
+    <div class="hero"><h1>PM<span>Office</span>3D</h1><div class="tag">เกมจำลองการบริหารโปรเจกต์ — แจกงาน คุมงบ คุมเวลา ดูแลคน</div></div>
+    <div class="how">
+      <div><b>1. วางแผน</b>เกมเริ่มแบบหยุดไว้ งานที่มี 🔒 ต้องรองานก่อนหน้าเสร็จ แจกงานก่อนแล้วกด ▶</div>
+      <div><b>2. แจกงาน</b>กด 🪄 แจกงานอัตโนมัติ หรือคลิกการ์ด → กดชื่อคน (ลากวางก็ได้) ทีมจะหยิบงานถัดไปเองเมื่อว่าง</div>
+      <div><b>3. ดูแลคน</b>ความเครียดเต็ม = Burnout ลาพัก 2.5 วัน ใช้ 1:1 / เลี้ยงข้าว / ปิด OT ให้ถูกจังหวะ</div>
+      <div><b>4. ตัดสินใจ</b>มีเหตุการณ์สุ่มเข้ามา ทุกทางเลือกมี trade-off ระหว่าง Scope–เวลา–งบ</div>
+    </div>
+    <div class="tabs"><button class="tab on" data-tab="levels">🎮 เลือกด่าน</button><button class="tab" data-tab="shop">🏢 อัปเกรดออฟฟิศ</button><span class="coins" id="coinTxt">🪙 0</span></div>
+    <div class="levels" id="levels"></div>
+    <div id="shopPane" style="display:none"><p style="font-size:13px;opacity:.75;margin-top:10px">ได้เหรียญ 🪙 จากเกรด ดาวใหม่ และงบที่เหลือ อัปเกรดแล้วมีผลทุกด่าน และเห็นของใหม่ในออฟฟิศด้านขวา 👉</p><div class="shopgrid" id="shop"></div></div>
+    <p class="hint2" style="font-size:12px;opacity:.6;margin-top:14px">ลากเมาส์/นิ้วเพื่อหมุนกล้อง · ล้อเมาส์เพื่อซูม · Space = หยุด/เล่น</p>
+  </div>
+</div>
+
+<div id="end" class="ov hide"><div class="dlg panel" id="endBody"></div></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

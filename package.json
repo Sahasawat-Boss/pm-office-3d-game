@@ -1,0 +1,18 @@
+{
+  "name": "pm-office-3d",
+  "private": true,
+  "version": "1.0.0",
+  "description": "PM Office 3D — เกมจำลองการบริหารโปรเจกต์แบบ 3D (Three.js)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview --open"
+  },
+  "dependencies": {
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

@@ -1,0 +1,151 @@
+// ===== ข้อมูลด่าน =====
+// เพิ่มด่านใหม่: copy object ใน LEVELS แล้วแก้ team / tasks / days / budget
+// - type: 'dev' | 'design' | 'qa'
+// - pri:  'H' | 'M' | 'L'  (ตัด Scope ได้เฉพาะ M/L)
+// - dep:  id งานที่ต้องเสร็จก่อน
+// - ev:   [min,max] จำนวนวันระหว่างเหตุการณ์สุ่ม
+// อย่าลืมเพิ่มภารกิจดาวของด่านใน LOBJ (src/main.js)
+const ROLES = {
+  dev:{th:'Developer',icon:'💻',hex:0x3d7bff,css:'#3d7bff'},
+  design:{th:'Designer',icon:'🎨',hex:0xff5fa2,css:'#ff5fa2'},
+  qa:{th:'QA Tester',icon:'🧪',hex:0x22b07d,css:'#22b07d'}
+};
+const PRIW = {H:3,M:2,L:1};
+
+const LEVELS = [
+ { id:'cafe', icon:'☕', name:'เว็บไซต์ร้านกาแฟ', diff:'ง่าย', dcol:'#22b07d', days:17, budget:205000, ev:[5,7],
+   desc:'ลูกค้ารายแรก! เว็บเมนู ตะกร้า และระบบจองโต๊ะ ทีมเล็ก 3 คน',
+   feats:['ระบบสะสมแต้ม','หน้ารีวิวลูกค้า','Dark mode'],
+   team:[{name:'ต้น',role:'dev',skill:4,salary:4000},{name:'มายด์',role:'design',skill:3,salary:3500},{name:'บีม',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'Wireframe & Flow',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'UI หน้าเมนู',type:'design',effort:9,pri:'M',dep:['t1']},
+    {id:'t3',name:'ตั้งค่า Next.js + DB',type:'dev',effort:8,pri:'H'},
+    {id:'t4',name:'หน้าเมนู & ตะกร้า',type:'dev',effort:12,pri:'H',dep:['t2','t3']},
+    {id:'t5',name:'ระบบจองโต๊ะ',type:'dev',effort:10,pri:'M',dep:['t3']},
+    {id:'t6',name:'หน้า About / Contact',type:'dev',effort:5,pri:'L',dep:['t3']},
+    {id:'t7',name:'ทดสอบ Responsive',type:'qa',effort:6,pri:'M',dep:['t4']},
+    {id:'t8',name:'UAT กับลูกค้า',type:'qa',effort:6,pri:'H',dep:['t4','t5']}
+   ]},
+{ id:'shop', icon:'🛍️', name:'ร้านค้าออนไลน์', diff:'ง่าย', dcol:'#22b07d', days:16, budget:250000, ev:[5,6],
+   desc:'ร้านเสื้อผ้าอยากขายออนไลน์ มี Dev 2 คนให้แบ่งงานกัน เริ่มเจอ Payment',
+   feats:['ระบบรีวิวสินค้า','Wishlist','Live chat'],
+   team:[{name:'โอ๊ต',role:'dev',skill:4,salary:4000},{name:'ดรีม',role:'dev',skill:3,salary:3200},{name:'น้ำ',role:'design',skill:3,salary:3500},{name:'แจ็ค',role:'qa',skill:2,salary:2600}],
+   tasks:[
+    {id:'t1',name:'ออกแบบหน้าร้าน',type:'design',effort:9,pri:'H'},
+    {id:'t2',name:'Product Catalog',type:'dev',effort:10,pri:'H'},
+    {id:'t3',name:'ตะกร้า + Checkout',type:'dev',effort:12,pri:'H',dep:['t1','t2']},
+    {id:'t4',name:'ระบบสมาชิก',type:'dev',effort:8,pri:'M'},
+    {id:'t5',name:'เชื่อม Payment',type:'dev',effort:10,pri:'H',dep:['t3']},
+    {id:'t6',name:'หน้าโปรโมชัน',type:'design',effort:6,pri:'L',dep:['t1']},
+    {id:'t7',name:'ระบบหลังร้าน (Stock)',type:'dev',effort:10,pri:'M',dep:['t2']},
+    {id:'t8',name:'SEO & Performance',type:'dev',effort:6,pri:'L',dep:['t3']},
+    {id:'t9',name:'ทดสอบ Checkout',type:'qa',effort:6,pri:'H',dep:['t5']},
+    {id:'t10',name:'ทดสอบบนมือถือ',type:'qa',effort:5,pri:'M',dep:['t3']}
+   ]},
+ { id:'food', icon:'🛵', name:'แอปสั่งอาหาร', diff:'กลาง', dcol:'#f08c00', days:19, budget:340000, ev:[4,6],
+   desc:'สตาร์ทอัปอยากได้แอปเดลิเวอรี มี Payment, Tracking ไรเดอร์ และ Senior/Junior ที่ฝีมือต่างกัน',
+   feats:['ระบบคูปองส่วนลด','แชทกับไรเดอร์','สั่งล่วงหน้า'],
+   team:[{name:'ปาล์ม',role:'dev',skill:5,salary:5500},{name:'นัท',role:'dev',skill:2,salary:2500},{name:'แพรว',role:'design',skill:3,salary:3500},{name:'เก่ง',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'UX Research',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'Design System',type:'design',effort:10,pri:'M',dep:['t1']},
+    {id:'t3',name:'UI หน้าร้าน & เมนู',type:'design',effort:10,pri:'H',dep:['t1']},
+    {id:'t4',name:'Backend API + Auth',type:'dev',effort:14,pri:'H'},
+    {id:'t5',name:'ระบบสั่งอาหาร',type:'dev',effort:14,pri:'H',dep:['t3','t4']},
+    {id:'t6',name:'Payment Gateway',type:'dev',effort:12,pri:'H',dep:['t4']},
+    {id:'t7',name:'Tracking ไรเดอร์',type:'dev',effort:14,pri:'M',dep:['t4']},
+    {id:'t8',name:'Push Notification',type:'dev',effort:7,pri:'L',dep:['t5']},
+    {id:'t9',name:'Admin Dashboard',type:'dev',effort:10,pri:'M',dep:['t4']},
+    {id:'t10',name:'เขียน Test Plan',type:'qa',effort:5,pri:'M'},
+    {id:'t11',name:'ทดสอบ Payment',type:'qa',effort:7,pri:'H',dep:['t6']},
+    {id:'t12',name:'Regression Test',type:'qa',effort:9,pri:'H',dep:['t5','t7']}
+   ]},
+{ id:'clinic', icon:'🏥', name:'ระบบจองคิวคลินิก', diff:'กลาง', dcol:'#f08c00', days:18, budget:300000, ev:[4,6],
+   desc:'คลินิกอยากเลิกจองคิวทางโทรศัพท์ ต้องเชื่อม LINE และดูแลข้อมูลผู้ป่วยตาม PDPA',
+   feats:['ชำระเงินออนไลน์','Telemedicine วิดีโอคอล','ระบบสะสมแต้ม'],
+   team:[{name:'เบนซ์',role:'dev',skill:4,salary:4200},{name:'แบม',role:'dev',skill:3,salary:3300},{name:'ปุ๊กกี้',role:'design',skill:3,salary:3500},{name:'โจ้',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'สัมภาษณ์หมอ & พยาบาล',type:'design',effort:7,pri:'H'},
+    {id:'t2',name:'Flow การจองคิว',type:'design',effort:8,pri:'H',dep:['t1']},
+    {id:'t3',name:'Database ผู้ป่วย (PDPA)',type:'dev',effort:12,pri:'H'},
+    {id:'t4',name:'ระบบจองคิว',type:'dev',effort:14,pri:'H',dep:['t2','t3']},
+    {id:'t5',name:'แจ้งเตือนผ่าน LINE',type:'dev',effort:9,pri:'M',dep:['t4']},
+    {id:'t6',name:'ปฏิทินแพทย์',type:'dev',effort:10,pri:'H',dep:['t3']},
+    {id:'t7',name:'ประวัติการรักษา',type:'dev',effort:10,pri:'M',dep:['t3']},
+    {id:'t8',name:'UI แอปผู้ป่วย',type:'design',effort:9,pri:'M',dep:['t2']},
+    {id:'t9',name:'Dashboard คลินิก',type:'dev',effort:8,pri:'L',dep:['t4']},
+    {id:'t10',name:'Security Review',type:'qa',effort:6,pri:'H',dep:['t3']},
+    {id:'t11',name:'ทดสอบการจองคิว',type:'qa',effort:8,pri:'H',dep:['t4','t6']},
+    {id:'t12',name:'UAT กับพยาบาล',type:'qa',effort:6,pri:'H',dep:['t11']}
+   ]},
+ { id:'game', icon:'🎮', name:'เกมมือถือ', diff:'ยาก', dcol:'#e5484d', days:21, budget:430000, ev:[4,5],
+   desc:'สตูดิโอเกมอินดี้ งานดีไซน์หนักกว่าโค้ด มี Designer 2 คนฝีมือต่างกัน และต้อง Playtest ก่อนขึ้น Store',
+   feats:['โหมด Multiplayer','Battle Pass','ด่านบอสพิเศษ'],
+   team:[{name:'ไนซ์',role:'dev',skill:4,salary:4200},{name:'มิ้นท์',role:'dev',skill:3,salary:3300},{name:'ซัน',role:'design',skill:4,salary:4000},{name:'จูน',role:'design',skill:2,salary:2400},{name:'ต้า',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'Game Design Doc',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'Concept Art',type:'design',effort:10,pri:'H',dep:['t1']},
+    {id:'t3',name:'Core Gameplay',type:'dev',effort:14,pri:'H',dep:['t1']},
+    {id:'t4',name:'ตัวละคร & Animation',type:'design',effort:14,pri:'H',dep:['t2']},
+    {id:'t5',name:'ฉากด่าน 1–10',type:'design',effort:12,pri:'M',dep:['t2']},
+    {id:'t6',name:'ระบบ Level & Save',type:'dev',effort:10,pri:'H',dep:['t3']},
+    {id:'t7',name:'UI / HUD',type:'design',effort:8,pri:'M',dep:['t2']},
+    {id:'t8',name:'In-app Purchase',type:'dev',effort:10,pri:'M',dep:['t6']},
+    {id:'t9',name:'Leaderboard',type:'dev',effort:8,pri:'L',dep:['t6']},
+    {id:'t10',name:'เสียง & เอฟเฟกต์',type:'design',effort:8,pri:'L',dep:['t4']},
+    {id:'t11',name:'Playtest รอบแรก',type:'qa',effort:7,pri:'H',dep:['t3','t4']},
+    {id:'t12',name:'ปรับ Balance เกม',type:'dev',effort:6,pri:'M',dep:['t11']},
+    {id:'t13',name:'ทดสอบหลายรุ่นมือถือ',type:'qa',effort:8,pri:'H',dep:['t6','t7']},
+    {id:'t14',name:'ส่งขึ้น App Store',type:'qa',effort:5,pri:'H',dep:['t12','t13']}
+   ]},
+ { id:'erp', icon:'🏢', name:'ระบบ ERP องค์กร', diff:'ยาก', dcol:'#e5484d', days:26, budget:520000, ev:[4,5],
+   desc:'โปรเจกต์ใหญ่ หลายโมดูล dependency ซับซ้อน ต้องหา Critical Path ให้เจอ',
+   feats:['โมดูล CRM','แอปมือถือสำหรับพนักงาน','AI สรุปรายงาน'],
+   team:[{name:'ก้อง',role:'dev',skill:4,salary:4000},{name:'ฟ้า',role:'dev',skill:3,salary:3500},{name:'ภูมิ',role:'dev',skill:2,salary:2500},{name:'ใบเตย',role:'design',skill:3,salary:3500},{name:'วิน',role:'qa',skill:4,salary:3200}],
+   tasks:[
+    {id:'t1',name:'Workshop UX กับ User',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'Architecture & DB Schema',type:'dev',effort:12,pri:'H'},
+    {id:'t3',name:'UI Kit',type:'design',effort:10,pri:'M',dep:['t1']},
+    {id:'t4',name:'โมดูล HR',type:'dev',effort:16,pri:'H',dep:['t2','t3']},
+    {id:'t5',name:'โมดูลบัญชี',type:'dev',effort:18,pri:'H',dep:['t2','t3']},
+    {id:'t6',name:'โมดูลคลังสินค้า',type:'dev',effort:16,pri:'M',dep:['t2']},
+    {id:'t7',name:'ระบบสิทธิ์ (RBAC)',type:'dev',effort:10,pri:'H',dep:['t2']},
+    {id:'t8',name:'รายงาน & Dashboard',type:'dev',effort:12,pri:'M',dep:['t5']},
+    {id:'t9',name:'Migrate ข้อมูลเก่า',type:'dev',effort:12,pri:'H',dep:['t5','t6']},
+    {id:'t10',name:'UI รายงาน',type:'design',effort:8,pri:'L',dep:['t3']},
+    {id:'t11',name:'Integration SSO',type:'dev',effort:8,pri:'L',dep:['t7']},
+    {id:'t12',name:'เขียน Test Plan',type:'qa',effort:6,pri:'M'},
+    {id:'t13',name:'ทดสอบโมดูล HR',type:'qa',effort:7,pri:'M',dep:['t4']},
+    {id:'t14',name:'ทดสอบโมดูลบัญชี',type:'qa',effort:9,pri:'H',dep:['t5']},
+    {id:'t15',name:'Performance Test',type:'qa',effort:8,pri:'M',dep:['t9']},
+    {id:'t16',name:'UAT + Go-live',type:'qa',effort:8,pri:'H',dep:['t13','t14','t15']}
+   ]},
+ { id:'bank', icon:'🏦', name:'แอปธนาคารดิจิทัล', diff:'โหด', dcol:'#7b2cbf', days:19, budget:520000, ev:[3,4],
+   desc:'ด่านบอส! ทีม 6 คน งาน 18 ชิ้น ความปลอดภัยต้องผ่าน ห้ามพลาดเรื่องคุณภาพ',
+   feats:['ระบบลงทุนกองทุน','บัตรเครดิตดิจิทัล','Chatbot AI'],
+   team:[{name:'เจ',role:'dev',skill:5,salary:6000},{name:'ปอ',role:'dev',skill:3,salary:3500},{name:'กาย',role:'dev',skill:2,salary:2500},{name:'เอม',role:'design',skill:3,salary:3600},{name:'นนท์',role:'qa',skill:4,salary:3600},{name:'ฝ้าย',role:'qa',skill:2,salary:2400}],
+   tasks:[
+    {id:'t1',name:'Compliance (ธปท.)',type:'qa',effort:8,pri:'H'},
+    {id:'t2',name:'UX Journey',type:'design',effort:8,pri:'H'},
+    {id:'t3',name:'Core Banking API',type:'dev',effort:16,pri:'H'},
+    {id:'t4',name:'eKYC ยืนยันตัวตน',type:'dev',effort:14,pri:'H',dep:['t3']},
+    {id:'t5',name:'โอนเงิน & PromptPay',type:'dev',effort:16,pri:'H',dep:['t2','t3']},
+    {id:'t6',name:'จ่ายบิล',type:'dev',effort:10,pri:'M',dep:['t5']},
+    {id:'t7',name:'Design System',type:'design',effort:10,pri:'M',dep:['t2']},
+    {id:'t8',name:'UI ทุกหน้าจอ',type:'design',effort:14,pri:'H',dep:['t7']},
+    {id:'t9',name:'OTP & 2FA',type:'dev',effort:8,pri:'H',dep:['t3']},
+    {id:'t10',name:'แจ้งเตือนธุรกรรม',type:'dev',effort:8,pri:'M',dep:['t5']},
+    {id:'t11',name:'สลิป & ประวัติ',type:'dev',effort:8,pri:'L',dep:['t5']},
+    {id:'t12',name:'Pen Test ความปลอดภัย',type:'qa',effort:10,pri:'H',dep:['t4','t9']},
+    {id:'t13',name:'ทดสอบการโอนเงิน',type:'qa',effort:9,pri:'H',dep:['t5']},
+    {id:'t14',name:'Load Test',type:'qa',effort:8,pri:'M',dep:['t5']},
+    {id:'t15',name:'Accessibility Test',type:'qa',effort:5,pri:'L',dep:['t8']},
+    {id:'t16',name:'Fraud Detection',type:'dev',effort:12,pri:'M',dep:['t5']},
+    {id:'t17',name:'เอกสาร Audit',type:'qa',effort:6,pri:'M',dep:['t1']},
+    {id:'t18',name:'Go-live & Monitoring',type:'dev',effort:6,pri:'H',dep:['t12','t13','t14']}
+   ]}
+
+];
+
+export { ROLES, PRIW, LEVELS };

@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PM Office 3D — เกมฝึกบริหารโปรเจกต์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d2433; --paper:#fffaf0; --paper2:#fff3dc; --orange:#ff6b3d; --teal:#14a38b;
+  --dev:#3d7bff; --design:#ff5fa2; --qa:#22b07d; --red:#e5484d; --yellow:#ffc53d;
+  --shadow:4px 4px 0 var(--ink);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,#bfe6de 0%,#f3e6cf 70%,#f0d9b5 100%);}
+button{font-family:inherit;color:inherit;cursor:pointer}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.panel{background:var(--paper);border:2.5px solid var(--ink);border-radius:14px;box-shadow:var(--shadow)}
+h1,h2,h3,h4,.num,.brand{font-family:'Kanit',sans-serif}
+
+/* top bar */
+#top{position:fixed;top:10px;left:10px;right:10px;display:flex;align-items:center;gap:14px;padding:8px 12px;z-index:5;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.5px;white-space:nowrap}
+.brand span{color:var(--orange)}
+.proj{font-weight:600;font-size:13px;background:var(--ink);color:#fff;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.stats{display:flex;gap:14px;flex:1;flex-wrap:wrap}
+.stat{min-width:78px}
+.stat small{display:block;font-size:11px;opacity:.65;line-height:1.1}
+.stat b{font-family:'Kanit';font-size:17px;font-weight:700;line-height:1.2}
+.mini{height:5px;background:#0001;border-radius:9px;overflow:hidden;margin-top:2px}
+.mini i{display:block;height:100%;background:var(--orange);width:0}
+.speed{display:flex;gap:6px}
+.speed button{width:40px;height:34px;border:2px solid var(--ink);border-radius:9px;background:#fff;font-size:15px;font-weight:700}
+.speed button.on{background:var(--ink);color:#fff}
+.speed button.off{opacity:.45;text-decoration:line-through}
+.speed button:disabled{opacity:.4;cursor:not-allowed}
+.pulse{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #ff6b3d99}50%{box-shadow:0 0 0 7px #ff6b3d00}}
+.bad{color:var(--red)} .good{color:var(--teal)}
+
+/* side panels */
+#board{position:fixed;left:10px;top:78px;bottom:96px;width:300px;padding:10px;display:flex;flex-direction:column;z-index:4}
+#side{position:fixed;right:10px;top:78px;bottom:96px;width:280px;padding:10px;display:flex;flex-direction:column;gap:8px;z-index:4}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.ph h3{font-size:16px}
+.ph small{font-size:11px;opacity:.6}
+.scroll{overflow-y:auto;flex:1;padding-right:4px;scrollbar-width:thin}
+.sec{font-family:'Kanit';font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:8px 0 4px;opacity:.7;display:flex;justify-content:space-between}
+.card{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:7px 8px;margin-bottom:6px;cursor:pointer;position:relative;border-left-width:7px;transition:transform .12s}
+.card:hover{transform:translateX(2px)}
+.card.t-dev{border-left-color:var(--dev)} .card.t-design{border-left-color:var(--design)} .card.t-qa{border-left-color:var(--qa)}
+.card.sel{background:#fff1d6;box-shadow:0 0 0 3px var(--orange)}
+.card.blocked{opacity:.55;cursor:not-allowed;background:repeating-linear-gradient(45deg,#fff,#fff 6px,#f5f0e6 6px,#f5f0e6 12px)}
+.card.done{opacity:.6;padding:4px 8px;cursor:default}
+.card.done .bar,.card.done .meta{display:none}
+.card.cut{opacity:.4;text-decoration:line-through;padding:4px 8px;cursor:default}
+.card.bug{background:#fff0f0}
+.cutmode .card.cuttable{outline:2px dashed var(--red);outline-offset:2px}
+.row{display:flex;align-items:center;gap:6px}
+.row b{font-size:13px;font-weight:600;flex:1;line-height:1.25}
+.pri{font-family:'Kanit';font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;color:#fff}
+.pri.H{background:var(--red)} .pri.M{background:#f08c00} .pri.L{background:#8a93a6}
+.bar{height:6px;background:#0000000f;border-radius:9px;overflow:hidden;margin:5px 0 3px}
+.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:9px;transition:width .2s linear}
+.meta{font-size:11px;opacity:.7}
+
+/* team */
+#selCard{background:var(--paper2);border:2px solid var(--ink);border-radius:10px;padding:8px;font-size:12px}
+#selCard .empty{opacity:.6;text-align:center;padding:6px}
+#selCard h4{font-size:16px;display:flex;align-items:center;gap:6px}
+.btns{display:flex;gap:6px;margin-top:6px}
+.btn{border:2px solid var(--ink);background:#fff;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:600}
+.btn:hover{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.4;pointer-events:none}
+.mem{border:2px solid transparent;border-radius:10px;padding:5px 7px;cursor:pointer;margin-bottom:3px;background:#fff}
+.mem:hover{border-color:#1d243355}
+.mem.sel{border-color:var(--orange);background:#fff1d6}
+.mem.off{opacity:.55}
+.mem.match{box-shadow:inset 0 0 0 2px var(--teal)}
+.mem .row b{font-size:13px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;border:1.5px solid var(--ink)}
+.stars{font-size:10px;color:#f08c00;letter-spacing:-1px}
+.mb{display:grid;grid-template-columns:34px 1fr;gap:2px 6px;align-items:center;font-size:10px;margin-top:3px}
+.mb .bar{margin:0;height:5px}
+.mb .m i{background:var(--teal)} .mb .s i{background:var(--red)}
+#log{font-size:11.5px;max-height:150px;overflow-y:auto;border-top:2px dashed #1d243333;padding-top:6px}
+#log div{padding:2px 0;line-height:1.35}
+#log div:first-child{font-weight:600}
+
+/* actions */
+#actions{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;display:flex;gap:6px;padding:7px;z-index:5;max-width:calc(100% - 20px);overflow-x:auto}
+.act{border:2px solid var(--ink);background:#fff;border-radius:10px;padding:5px 9px;min-width:82px;text-align:center;flex:none}
+.act .e{font-size:19px;display:block;line-height:1.1}
+.act .l{font-size:12px;font-weight:600;display:block;white-space:nowrap}
+.act .c{font-size:10px;opacity:.6;display:block;white-space:nowrap}
+.act:hover{transform:translateY(-2px)}
+.act.on{background:var(--orange);color:#fff}
+.act.on .c{opacity:.9}
+.act:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.act.mob{display:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;padding-top:6px;border-top:1.5px dashed #1d243344}
+.chips .lab{font-size:11px;width:100%;opacity:.7}
+.chip{border:2px solid var(--ink);background:#fff;border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:4px}
+.chip.rec{background:#dff7ef;border-color:var(--teal)}
+.chip.busy{opacity:.7}
+.chip:hover{background:var(--ink);color:#fff}
+.chip small{font-weight:400;font-size:10.5px;opacity:.75}
+.qtask{display:block;width:100%;text-align:left;border:2px solid var(--ink);background:#fff;border-radius:8px;padding:5px 8px;margin-top:5px;font-size:12px;font-weight:600}
+.qtask:hover{background:var(--ink);color:#fff}
+.qtask small{font-weight:400;opacity:.7}
+.ph .btn{padding:4px 8px;font-size:12px;background:var(--yellow);white-space:nowrap}
+.ph h3{white-space:nowrap;display:flex;align-items:center;gap:6px}
+.idlebadge{font-size:11px;background:var(--orange);color:#fff;border-radius:99px;padding:1px 8px;font-weight:600}
+.lbl.idle{border-color:var(--orange);animation:bob 1s ease-in-out infinite}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-5px}}
+#ghost{position:fixed;pointer-events:none;z-index:30;background:#fff;border:2px solid var(--ink);border-radius:10px;padding:6px 10px;font-size:13px;font-weight:600;box-shadow:var(--shadow);transform:translate(10px,10px);display:none}
+.mem.drop{box-shadow:0 0 0 3px var(--orange)}
+#hint{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:7px 14px;border-radius:99px;font-size:13px;z-index:6;pointer-events:none;white-space:nowrap;transition:opacity .3s;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+#hint.warn{background:var(--red)}
+#hint:empty{opacity:0}
+
+/* 3d labels */
+#labels{position:fixed;inset:0;pointer-events:none;z-index:2}
+.lbl{position:absolute;transform:translate(-50%,-100%);background:#fffaf0ee;border:2px solid var(--ink);border-radius:9px;padding:2px 7px 3px;font-size:11px;white-space:nowrap;text-align:center;min-width:64px}
+.lbl b{font-family:'Kanit';font-weight:600;font-size:12px}
+.lbl .lb{height:4px;background:#0001;border-radius:5px;overflow:hidden;margin-top:2px}
+.lbl .lb i{display:block;height:100%;background:var(--teal)}
+.lbl.sel{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange)}
+.lbl.match{background:#dff7ef}
+.lbl .tn{display:block;font-size:10px;opacity:.7;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+.pop{position:absolute;transform:translate(-50%,-100%);font-family:'Kanit';font-weight:700;font-size:15px;white-space:nowrap;text-shadow:0 2px 0 #fff,0 -1px 0 #fff,1px 0 0 #fff,-1px 0 0 #fff;animation:rise 1.8s ease-out forwards}
+@keyframes rise{0%{opacity:0;margin-top:0}12%{opacity:1}100%{opacity:0;margin-top:-60px}}
+
+/* overlays */
+.ov{position:fixed;inset:0;background:#1d243388;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.ov.hide{display:none}
+.dlg{max-width:620px;width:100%;max-height:92vh;overflow-y:auto;padding:22px}
+.dlg h2{font-size:24px;line-height:1.2}
+.ev-ic{font-size:44px;line-height:1}
+.dlg p{margin:8px 0;line-height:1.55}
+.choice{display:block;width:100%;text-align:left;border:2.5px solid var(--ink);background:#fff;border-radius:12px;padding:10px 12px;margin-top:8px}
+.choice:hover{background:#fff1d6;transform:translateX(3px)}
+.choice b{display:block;font-size:14.5px}
+.choice small{opacity:.65;font-size:12px}
+.res{background:var(--paper2);border:2px solid var(--ink);border-radius:10px;padding:10px;margin-top:10px}
+.lesson{background:#e3f6f1;border:2px solid var(--teal);border-radius:10px;padding:10px;margin-top:10px;font-size:13.5px}
+.lesson b{color:var(--teal)}
+.big{display:inline-block;background:var(--orange);color:#fff;border:2.5px solid var(--ink);box-shadow:var(--shadow);border-radius:12px;padding:10px 22px;font-family:'Kanit';font-weight:700;font-size:17px;margin-top:14px}
+.big:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.big.alt{background:#fff;color:var(--ink)}
+
+#start .dlg{max-width:880px}
+#start.shop{justify-content:flex-start;background:#1d243322;backdrop-filter:none}
+#start.shop .dlg{max-width:470px;margin-left:10px}
+#start.shop .how,#start.shop .hint2{display:none}
+.tabs{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.tab{border:2.5px solid var(--ink);background:#fff;border-radius:10px;padding:7px 14px;font-family:'Kanit';font-weight:600;font-size:15px}
+.tab.on{background:var(--ink);color:#fff}
+.coins{margin-left:auto;font-family:'Kanit';font-weight:700;font-size:18px;background:var(--yellow);border:2.5px solid var(--ink);border-radius:99px;padding:3px 14px;box-shadow:2px 2px 0 var(--ink)}
+.lv .stars3{font-size:18px;letter-spacing:2px;color:#d9cdb8}
+.lv .stars3 b{color:#f5a700;font-weight:400}
+.lv .objs{font-size:11px;margin-top:4px;line-height:1.5;opacity:.85}
+.lv .objs .got{color:#b07a00;font-weight:600}
+.shopgrid{display:grid;gap:8px;margin-top:12px}
+.up{display:grid;grid-template-columns:40px 1fr auto;gap:4px 10px;align-items:center;background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:8px 10px}
+.up .ui{font-size:28px;text-align:center}
+.up h4{font-size:15px}
+.up .ud{font-size:12px;opacity:.75;line-height:1.35}
+.pips{display:flex;gap:3px;margin:2px 0}
+.pips i{width:16px;height:6px;border-radius:3px;background:#1d243322}
+.pips i.on{background:var(--teal)}
+.buy{border:2.5px solid var(--ink);background:var(--yellow);border-radius:10px;padding:6px 10px;font-family:'Kanit';font-weight:700;font-size:14px;white-space:nowrap}
+.buy:disabled{background:#eee;opacity:.6;cursor:not-allowed}
+#objBox{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
+.obj{font-size:11px;border:1.5px solid #1d243355;border-radius:99px;padding:1px 8px;background:#fff}
+.obj.ok{border-color:var(--teal);color:#0f7a66}
+.obj.bad{border-color:var(--red);color:#c22f34;text-decoration:line-through}
+.starrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.star{flex:1;min-width:150px;border:2.5px solid var(--ink);border-radius:12px;padding:8px 10px;background:#fff;font-size:12.5px;display:flex;gap:8px;align-items:center}
+.star .s{font-size:26px;filter:grayscale(1);opacity:.35}
+.star.got .s{filter:none;opacity:1;animation:starpop .6s cubic-bezier(.3,1.8,.5,1) both}
+.star.got{background:#fff6d6}
+.star .nw{font-family:'Kanit';font-size:10px;font-weight:700;background:var(--orange);color:#fff;border-radius:5px;padding:0 5px;margin-left:4px}
+@keyframes starpop{0%{transform:scale(0) rotate(-40deg)}100%{transform:scale(1)}}
+.earn{margin-top:10px;background:var(--paper2);border:2px solid var(--ink);border-radius:10px;padding:8px 12px;font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.earn b{font-family:'Kanit';font-size:18px}
+.bd{margin-top:16px;background:#fff;border:2.5px solid var(--ink);border-radius:14px;padding:12px;position:relative}
+.bd h3{font-size:17px}
+.bd .sub{font-size:12px;opacity:.65}
+.legend{display:flex;gap:14px;font-size:12px;margin:6px 0 2px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2.5px solid}
+.bd svg{width:100%;height:auto;display:block;touch-action:none}
+.bd .tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.45;white-space:nowrap;display:none;z-index:2}
+.insight{margin:8px 0 0 18px;font-size:12.5px;line-height:1.55}
+#end .dlg{max-width:760px}
+.hero{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.hero h1{font-size:42px;font-weight:800;letter-spacing:-1px;line-height:1}
+.hero h1 span{color:var(--orange)}
+.tag{font-size:14px;opacity:.75;margin-bottom:5px}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:16px}
+.lv{border:2.5px solid var(--ink);border-radius:14px;padding:12px;background:#fff;text-align:left;box-shadow:var(--shadow);transition:transform .12s}
+.lv:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+.lv .lvh{display:flex;justify-content:space-between;align-items:center}
+.lv .df{font-family:'Kanit';font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;color:#fff}
+.lv h3{font-size:18px;margin:6px 0 2px}
+.lv p{font-size:12px;opacity:.75;margin:0 0 6px;line-height:1.45}
+.lv .spec{font-size:11.5px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.lv .best{margin-top:6px;font-family:'Kanit';font-size:12px;color:var(--teal);font-weight:600;min-height:16px}
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.how div{background:var(--paper2);border:2px solid var(--ink);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45}
+.how b{font-family:'Kanit';display:block;font-size:13px}
+
+.grade{font-family:'Kanit';font-size:84px;font-weight:800;line-height:1;width:120px;height:120px;border:3px solid var(--ink);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);flex:none}
+.endtop{display:flex;gap:18px;align-items:center}
+.sc{display:grid;grid-template-columns:110px 1fr 40px;gap:6px 10px;align-items:center;margin-top:14px;font-size:13px}
+.sc .bar{height:10px;margin:0;border:1.5px solid var(--ink);background:#fff}
+.sc .bar i{background:var(--orange)}
+.sc span:last-child{font-family:'Kanit';font-weight:700;text-align:right}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.facts span{background:#fff;border:2px solid var(--ink);border-radius:99px;padding:3px 10px;font-size:12px}
+.lessons{margin-top:12px}
+.lessons li{margin:6px 0 6px 18px;font-size:13px;line-height:1.5}
+
+#zoom{position:fixed;right:300px;bottom:100px;display:flex;flex-direction:column;gap:5px;z-index:3}
+#zoom button{width:34px;height:34px;border:2px solid var(--ink);border-radius:9px;background:#fff;font-weight:700;font-size:16px;box-shadow:2px 2px 0 var(--ink)}
+
+@media (max-width:980px){
+  #board,#side{display:none;top:auto;bottom:92px;height:58vh;width:auto;left:10px;right:10px}
+  #board.open,#side.open{display:flex}
+  .act.mob{display:block}
+  #top{gap:6px 10px;padding:6px 8px;top:6px;left:6px;right:6px}
+  .stats{order:3;flex-basis:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px}
+  .stat{min-width:0} .stat small{font-size:10px} .stat b{font-size:13px}
+  .brand{font-size:16px} .proj{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis}
+  .speed button{width:34px;height:30px}
+  #actions{left:6px;right:6px;transform:none;max-width:none;bottom:6px}
+  #zoom{right:10px}
+  .levels,.how{grid-template-columns:1fr}
+  .hero h1{font-size:32px}
+  #hint{top:auto;bottom:92px;white-space:normal;text-align:center;border-radius:12px}
+  #board.open~#hint,#side.open~#hint{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="labels"></div>
+<div id="ghost"></div>
+
+<div id="top" class="panel">
+  <div class="brand">PM<span>Office</span>3D</div>
+  <div class="proj" id="projName">—</div>
+  <div class="stats">
+    <div class="stat"><small>วันที่</small><b class="num" id="sDay">1/16</b><div class="mini"><i id="sDayBar"></i></div></div>
+    <div class="stat"><small>งบคงเหลือ</small><b class="num" id="sMoney">฿0</b><div class="mini"><i id="sMoneyBar"></i></div></div>
+    <div class="stat"><small>ความคืบหน้า</small><b class="num" id="sProg">0%</b><div class="mini"><i id="sProgBar"></i></div></div>
+    <div class="stat"><small>คุณภาพ</small><b class="num" id="sQual">80</b></div>
+    <div class="stat"><small>ลูกค้าพอใจ</small><b class="num" id="sStake">70</b></div>
+    <div class="stat"><small>ขวัญทีม</small><b class="num" id="sMorale">75</b></div>
+  </div>
+  <div class="speed"><button id="musBtn" title="เพลงพื้นหลัง">🎵</button><button id="sfxBtn" title="เสียงประกอบ">🔊</button><span style="width:4px"></span>
+    <button data-sp="0" title="หยุด (Space)">⏸</button>
+    <button data-sp="1" title="ปกติ">▶</button>
+    <button data-sp="2" title="เร็ว x2">⏩</button>
+  </div>
+</div>
+
+
+<aside id="board" class="panel">
+  <div class="ph"><h3>📋 Kanban <span id="idleBadge"></span></h3><button class="btn" id="autoBtn" title="ให้ทุกคนที่ว่างรับงานที่ตรงสายงานทันที">🪄 แจกอัตโนมัติ</button></div><div id="objBox"></div><div class="meta" style="margin:-2px 0 4px">คลิกการ์ด → กดชื่อคน · หรือลากการ์ดไปวางที่ตัวละคร</div>
+  <div class="scroll" id="boardList"></div>
+</aside>
+
+<aside id="side" class="panel">
+  <div id="selCard"></div>
+  <div class="ph" style="margin:0"><h3>👥 ทีม</h3><small id="burnRate"></small></div>
+  <div class="scroll" id="teamList"></div>
+</aside>
+
+<div id="hint"></div>
+
+<div id="zoom"><button id="zIn" title="ซูมเข้า">+</button><button id="zOut" title="ซูมออก">−</button></div>
+
+<div id="actions" class="panel">
+  <button class="act mob" id="aBoard"><span class="e">📋</span><span class="l">งาน</span><span class="c">Kanban</span></button>
+  <button class="act mob" id="aTeam"><span class="e">👥</span><span class="l">ทีม</span><span class="c">สมาชิก</span></button>
+  <button class="act on" id="aPull" title="เมื่อใครว่าง จะหยิบงานถัดไปที่ตรงสายงานเอง (Kanban pull system)"><span class="e">🔁</span><span class="l">หยิบงานเอง</span><span class="c" id="pullTxt">เปิดอยู่</span></button>
+  <button class="act" id="aOT" title="ทีมทำงานเร็วขึ้น 40% แต่เครียดเร็วมาก + ค่าแรง OT"><span class="e">🔥</span><span class="l">โหมด OT</span><span class="c">เร็ว +40% / เครียด↑↑</span></button>
+  <button class="act" id="a11" title="คุยกับคนที่เลือก: ลดความเครียด เพิ่มขวัญ แต่เขาหยุดงานครึ่งวัน"><span class="e">🗣️</span><span class="l">คุย 1:1</span><span class="c">เลือกคนก่อน</span></button>
+  <button class="act" id="aLunch" title="เลี้ยงข้าวทีม: ขวัญ↑ เครียด↓"><span class="e">🍕</span><span class="l">เลี้ยงข้าวทีม</span><span class="c" id="lunchCost">฿6,000</span></button>
+  <button class="act" id="aHire" title="จ้างฟรีแลนซ์ skill 4 (สูงสุด 2 คน) — 2 วันแรกยัง onboard"><span class="e">🧑‍💻</span><span class="l">จ้างฟรีแลนซ์</span><span class="c">฿15k + ฿7k/วัน</span></button>
+  <button class="act" id="aCut" title="ตัดงาน Priority M/L ที่ยังไม่เริ่มออกจาก scope"><span class="e">✂️</span><span class="l">ตัด Scope</span><span class="c">ลูกค้าพอใจ↓</span></button>
+  <button class="act" id="aExt" title="ขอเลื่อน deadline +3 วัน (สูงสุด 2 ครั้ง)"><span class="e">📅</span><span class="l">ขอเลื่อน +3 วัน</span><span class="c" id="extCost">ลูกค้าพอใจ −15</span></button>
+</div>
+
+<div id="modal" class="ov hide"><div class="dlg panel" id="modalBody"></div></div>
+
+<div id="start" class="ov">
+  <div class="dlg panel">
+    <div class="hero"><h1>PM<span>Office</span>3D</h1><div class="tag">เกมจำลองการบริหารโปรเจกต์ — แจกงาน คุมงบ คุมเวลา ดูแลคน</div></div>
+    <div class="how">
+      <div><b>1. วางแผน</b>เกมเริ่มแบบหยุดไว้ งานที่มี 🔒 ต้องรองานก่อนหน้าเสร็จ แจกงานก่อนแล้วกด ▶</div>
+      <div><b>2. แจกงาน</b>กด 🪄 แจกงานอัตโนมัติ หรือคลิกการ์ด → กดชื่อคน (ลากวางก็ได้) ทีมจะหยิบงานถัดไปเองเมื่อว่าง</div>
+      <div><b>3. ดูแลคน</b>ความเครียดเต็ม = Burnout ลาพัก 2.5 วัน ใช้ 1:1 / เลี้ยงข้าว / ปิด OT ให้ถูกจังหวะ</div>
+      <div><b>4. ตัดสินใจ</b>มีเหตุการณ์สุ่มเข้ามา ทุกทางเลือกมี trade-off ระหว่าง Scope–เวลา–งบ</div>
+    </div>
+    <div class="tabs"><button class="tab on" data-tab="levels">🎮 เลือกด่าน</button><button class="tab" data-tab="shop">🏢 อัปเกรดออฟฟิศ</button><span class="coins" id="coinTxt">🪙 0</span></div>
+    <div class="levels" id="levels"></div>
+    <div id="shopPane" style="display:none"><p style="font-size:13px;opacity:.75;margin-top:10px">ได้เหรียญ 🪙 จากเกรด ดาวใหม่ และงบที่เหลือ อัปเกรดแล้วมีผลทุกด่าน และเห็นของใหม่ในออฟฟิศด้านขวา 👉</p><div class="shopgrid" id="shop"></div></div>
+    <p class="hint2" style="font-size:12px;opacity:.6;margin-top:14px">ลากเมาส์/นิ้วเพื่อหมุนกล้อง · ล้อเมาส์เพื่อซูม · Space = หยุด/เล่น</p>
+  </div>
+</div>
+
+<div id="end" class="ov hide"><div class="dlg panel" id="endBody"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd = (a,b)=>a+Math.random()*(b-a);
+const rndInt = (a,b)=>Math.floor(rnd(a,b+1));
+const pick = a=>a[Math.floor(Math.random()*a.length)];
+const fmt = n => (n<0?'-':'')+'฿'+Math.abs(Math.round(n)).toLocaleString('en-US');
+const fmtK = n => (n<0?'-':'')+'฿'+(Math.abs(n)/1000).toFixed(Math.abs(n)>=100000?0:1)+'k';
+const DAY_SEC = 4.5;
+
+const ROLES = {
+  dev:{th:'Developer',icon:'💻',hex:0x3d7bff,css:'#3d7bff'},
+  design:{th:'Designer',icon:'🎨',hex:0xff5fa2,css:'#ff5fa2'},
+  qa:{th:'QA Tester',icon:'🧪',hex:0x22b07d,css:'#22b07d'}
+};
+const PRIW = {H:3,M:2,L:1};
+
+const LEVELS = [
+ { id:'cafe', icon:'☕', name:'เว็บไซต์ร้านกาแฟ', diff:'ง่าย', dcol:'#22b07d', days:17, budget:205000, ev:[5,7],
+   desc:'ลูกค้ารายแรก! เว็บเมนู ตะกร้า และระบบจองโต๊ะ ทีมเล็ก 3 คน',
+   feats:['ระบบสะสมแต้ม','หน้ารีวิวลูกค้า','Dark mode'],
+   team:[{name:'ต้น',role:'dev',skill:4,salary:4000},{name:'มายด์',role:'design',skill:3,salary:3500},{name:'บีม',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'Wireframe & Flow',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'UI หน้าเมนู',type:'design',effort:9,pri:'M',dep:['t1']},
+    {id:'t3',name:'ตั้งค่า Next.js + DB',type:'dev',effort:8,pri:'H'},
+    {id:'t4',name:'หน้าเมนู & ตะกร้า',type:'dev',effort:12,pri:'H',dep:['t2','t3']},
+    {id:'t5',name:'ระบบจองโต๊ะ',type:'dev',effort:10,pri:'M',dep:['t3']},
+    {id:'t6',name:'หน้า About / Contact',type:'dev',effort:5,pri:'L',dep:['t3']},
+    {id:'t7',name:'ทดสอบ Responsive',type:'qa',effort:6,pri:'M',dep:['t4']},
+    {id:'t8',name:'UAT กับลูกค้า',type:'qa',effort:6,pri:'H',dep:['t4','t5']}
+   ]},
+{ id:'shop', icon:'🛍️', name:'ร้านค้าออนไลน์', diff:'ง่าย', dcol:'#22b07d', days:16, budget:250000, ev:[5,6],
+   desc:'ร้านเสื้อผ้าอยากขายออนไลน์ มี Dev 2 คนให้แบ่งงานกัน เริ่มเจอ Payment',
+   feats:['ระบบรีวิวสินค้า','Wishlist','Live chat'],
+   team:[{name:'โอ๊ต',role:'dev',skill:4,salary:4000},{name:'ดรีม',role:'dev',skill:3,salary:3200},{name:'น้ำ',role:'design',skill:3,salary:3500},{name:'แจ็ค',role:'qa',skill:2,salary:2600}],
+   tasks:[
+    {id:'t1',name:'ออกแบบหน้าร้าน',type:'design',effort:9,pri:'H'},
+    {id:'t2',name:'Product Catalog',type:'dev',effort:10,pri:'H'},
+    {id:'t3',name:'ตะกร้า + Checkout',type:'dev',effort:12,pri:'H',dep:['t1','t2']},
+    {id:'t4',name:'ระบบสมาชิก',type:'dev',effort:8,pri:'M'},
+    {id:'t5',name:'เชื่อม Payment',type:'dev',effort:10,pri:'H',dep:['t3']},
+    {id:'t6',name:'หน้าโปรโมชัน',type:'design',effort:6,pri:'L',dep:['t1']},
+    {id:'t7',name:'ระบบหลังร้าน (Stock)',type:'dev',effort:10,pri:'M',dep:['t2']},
+    {id:'t8',name:'SEO & Performance',type:'dev',effort:6,pri:'L',dep:['t3']},
+    {id:'t9',name:'ทดสอบ Checkout',type:'qa',effort:6,pri:'H',dep:['t5']},
+    {id:'t10',name:'ทดสอบบนมือถือ',type:'qa',effort:5,pri:'M',dep:['t3']}
+   ]},
+ { id:'food', icon:'🛵', name:'แอปสั่งอาหาร', diff:'กลาง', dcol:'#f08c00', days:19, budget:340000, ev:[4,6],
+   desc:'สตาร์ทอัปอยากได้แอปเดลิเวอรี มี Payment, Tracking ไรเดอร์ และ Senior/Junior ที่ฝีมือต่างกัน',
+   feats:['ระบบคูปองส่วนลด','แชทกับไรเดอร์','สั่งล่วงหน้า'],
+   team:[{name:'ปาล์ม',role:'dev',skill:5,salary:5500},{name:'นัท',role:'dev',skill:2,salary:2500},{name:'แพรว',role:'design',skill:3,salary:3500},{name:'เก่ง',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'UX Research',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'Design System',type:'design',effort:10,pri:'M',dep:['t1']},
+    {id:'t3',name:'UI หน้าร้าน & เมนู',type:'design',effort:10,pri:'H',dep:['t1']},
+    {id:'t4',name:'Backend API + Auth',type:'dev',effort:14,pri:'H'},
+    {id:'t5',name:'ระบบสั่งอาหาร',type:'dev',effort:14,pri:'H',dep:['t3','t4']},
+    {id:'t6',name:'Payment Gateway',type:'dev',effort:12,pri:'H',dep:['t4']},
+    {id:'t7',name:'Tracking ไรเดอร์',type:'dev',effort:14,pri:'M',dep:['t4']},
+    {id:'t8',name:'Push Notification',type:'dev',effort:7,pri:'L',dep:['t5']},
+    {id:'t9',name:'Admin Dashboard',type:'dev',effort:10,pri:'M',dep:['t4']},
+    {id:'t10',name:'เขียน Test Plan',type:'qa',effort:5,pri:'M'},
+    {id:'t11',name:'ทดสอบ Payment',type:'qa',effort:7,pri:'H',dep:['t6']},
+    {id:'t12',name:'Regression Test',type:'qa',effort:9,pri:'H',dep:['t5','t7']}
+   ]},
+{ id:'clinic', icon:'🏥', name:'ระบบจองคิวคลินิก', diff:'กลาง', dcol:'#f08c00', days:18, budget:300000, ev:[4,6],
+   desc:'คลินิกอยากเลิกจองคิวทางโทรศัพท์ ต้องเชื่อม LINE และดูแลข้อมูลผู้ป่วยตาม PDPA',
+   feats:['ชำระเงินออนไลน์','Telemedicine วิดีโอคอล','ระบบสะสมแต้ม'],
+   team:[{name:'เบนซ์',role:'dev',skill:4,salary:4200},{name:'แบม',role:'dev',skill:3,salary:3300},{name:'ปุ๊กกี้',role:'design',skill:3,salary:3500},{name:'โจ้',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'สัมภาษณ์หมอ & พยาบาล',type:'design',effort:7,pri:'H'},
+    {id:'t2',name:'Flow การจองคิว',type:'design',effort:8,pri:'H',dep:['t1']},
+    {id:'t3',name:'Database ผู้ป่วย (PDPA)',type:'dev',effort:12,pri:'H'},
+    {id:'t4',name:'ระบบจองคิว',type:'dev',effort:14,pri:'H',dep:['t2','t3']},
+    {id:'t5',name:'แจ้งเตือนผ่าน LINE',type:'dev',effort:9,pri:'M',dep:['t4']},
+    {id:'t6',name:'ปฏิทินแพทย์',type:'dev',effort:10,pri:'H',dep:['t3']},
+    {id:'t7',name:'ประวัติการรักษา',type:'dev',effort:10,pri:'M',dep:['t3']},
+    {id:'t8',name:'UI แอปผู้ป่วย',type:'design',effort:9,pri:'M',dep:['t2']},
+    {id:'t9',name:'Dashboard คลินิก',type:'dev',effort:8,pri:'L',dep:['t4']},
+    {id:'t10',name:'Security Review',type:'qa',effort:6,pri:'H',dep:['t3']},
+    {id:'t11',name:'ทดสอบการจองคิว',type:'qa',effort:8,pri:'H',dep:['t4','t6']},
+    {id:'t12',name:'UAT กับพยาบาล',type:'qa',effort:6,pri:'H',dep:['t11']}
+   ]},
+ { id:'game', icon:'🎮', name:'เกมมือถือ', diff:'ยาก', dcol:'#e5484d', days:21, budget:430000, ev:[4,5],
+   desc:'สตูดิโอเกมอินดี้ งานดีไซน์หนักกว่าโค้ด มี Designer 2 คนฝีมือต่างกัน และต้อง Playtest ก่อนขึ้น Store',
+   feats:['โหมด Multiplayer','Battle Pass','ด่านบอสพิเศษ'],
+   team:[{name:'ไนซ์',role:'dev',skill:4,salary:4200},{name:'มิ้นท์',role:'dev',skill:3,salary:3300},{name:'ซัน',role:'design',skill:4,salary:4000},{name:'จูน',role:'design',skill:2,salary:2400},{name:'ต้า',role:'qa',skill:3,salary:3000}],
+   tasks:[
+    {id:'t1',name:'Game Design Doc',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'Concept Art',type:'design',effort:10,pri:'H',dep:['t1']},
+    {id:'t3',name:'Core Gameplay',type:'dev',effort:14,pri:'H',dep:['t1']},
+    {id:'t4',name:'ตัวละคร & Animation',type:'design',effort:14,pri:'H',dep:['t2']},
+    {id:'t5',name:'ฉากด่าน 1–10',type:'design',effort:12,pri:'M',dep:['t2']},
+    {id:'t6',name:'ระบบ Level & Save',type:'dev',effort:10,pri:'H',dep:['t3']},
+    {id:'t7',name:'UI / HUD',type:'design',effort:8,pri:'M',dep:['t2']},
+    {id:'t8',name:'In-app Purchase',type:'dev',effort:10,pri:'M',dep:['t6']},
+    {id:'t9',name:'Leaderboard',type:'dev',effort:8,pri:'L',dep:['t6']},
+    {id:'t10',name:'เสียง & เอฟเฟกต์',type:'design',effort:8,pri:'L',dep:['t4']},
+    {id:'t11',name:'Playtest รอบแรก',type:'qa',effort:7,pri:'H',dep:['t3','t4']},
+    {id:'t12',name:'ปรับ Balance เกม',type:'dev',effort:6,pri:'M',dep:['t11']},
+    {id:'t13',name:'ทดสอบหลายรุ่นมือถือ',type:'qa',effort:8,pri:'H',dep:['t6','t7']},
+    {id:'t14',name:'ส่งขึ้น App Store',type:'qa',effort:5,pri:'H',dep:['t12','t13']}
+   ]},
+ { id:'erp', icon:'🏢', name:'ระบบ ERP องค์กร', diff:'ยาก', dcol:'#e5484d', days:26, budget:520000, ev:[4,5],
+   desc:'โปรเจกต์ใหญ่ หลายโมดูล dependency ซับซ้อน ต้องหา Critical Path ให้เจอ',
+   feats:['โมดูล CRM','แอปมือถือสำหรับพนักงาน','AI สรุปรายงาน'],
+   team:[{name:'ก้อง',role:'dev',skill:4,salary:4000},{name:'ฟ้า',role:'dev',skill:3,salary:3500},{name:'ภูมิ',role:'dev',skill:2,salary:2500},{name:'ใบเตย',role:'design',skill:3,salary:3500},{name:'วิน',role:'qa',skill:4,salary:3200}],
+   tasks:[
+    {id:'t1',name:'Workshop UX กับ User',type:'design',effort:8,pri:'H'},
+    {id:'t2',name:'Architecture & DB Schema',type:'dev',effort:12,pri:'H'},
+    {id:'t3',name:'UI Kit',type:'design',effort:10,pri:'M',dep:['t1']},
+    {id:'t4',name:'โมดูล HR',type:'dev',effort:16,pri:'H',dep:['t2','t3']},
+    {id:'t5',name:'โมดูลบัญชี',type:'dev',effort:18,pri:'H',dep:['t2','t3']},
+    {id:'t6',name:'โมดูลคลังสินค้า',type:'dev',effort:16,pri:'M',dep:['t2']},
+    {id:'t7',name:'ระบบสิทธิ์ (RBAC)',type:'dev',effort:10,pri:'H',dep:['t2']},
+    {id:'t8',name:'รายงาน & Dashboard',type:'dev',effort:12,pri:'M',dep:['t5']},
+    {id:'t9',name:'Migrate ข้อมูลเก่า',type:'dev',effort:12,pri:'H',dep:['t5','t6']},
+    {id:'t10',name:'UI รายงาน',type:'design',effort:8,pri:'L',dep:['t3']},
+    {id:'t11',name:'Integration SSO',type:'dev',effort:8,pri:'L',dep:['t7']},
+    {id:'t12',name:'เขียน Test Plan',type:'qa',effort:6,pri:'M'},
+    {id:'t13',name:'ทดสอบโมดูล HR',type:'qa',effort:7,pri:'M',dep:['t4']},
+    {id:'t14',name:'ทดสอบโมดูลบัญชี',type:'qa',effort:9,pri:'H',dep:['t5']},
+    {id:'t15',name:'Performance Test',type:'qa',effort:8,pri:'M',dep:['t9']},
+    {id:'t16',name:'UAT + Go-live',type:'qa',effort:8,pri:'H',dep:['t13','t14','t15']}
+   ]},
+ { id:'bank', icon:'🏦', name:'แอปธนาคารดิจิทัล', diff:'โหด', dcol:'#7b2cbf', days:19, budget:520000, ev:[3,4],
+   desc:'ด่านบอส! ทีม 6 คน งาน 18 ชิ้น ความปลอดภัยต้องผ่าน ห้ามพลาดเรื่องคุณภาพ',
+   feats:['ระบบลงทุนกองทุน','บัตรเครดิตดิจิทัล','Chatbot AI'],
+   team:[{name:'เจ',role:'dev',skill:5,salary:6000},{name:'ปอ',role:'dev',skill:3,salary:3500},{name:'กาย',role:'dev',skill:2,salary:2500},{name:'เอม',role:'design',skill:3,salary:3600},{name:'นนท์',role:'qa',skill:4,salary:3600},{name:'ฝ้าย',role:'qa',skill:2,salary:2400}],
+   tasks:[
+    {id:'t1',name:'Compliance (ธปท.)',type:'qa',effort:8,pri:'H'},
+    {id:'t2',name:'UX Journey',type:'design',effort:8,pri:'H'},
+    {id:'t3',name:'Core Banking API',type:'dev',effort:16,pri:'H'},
+    {id:'t4',name:'eKYC ยืนยันตัวตน',type:'dev',effort:14,pri:'H',dep:['t3']},
+    {id:'t5',name:'โอนเงิน & PromptPay',type:'dev',effort:16,pri:'H',dep:['t2','t3']},
+    {id:'t6',name:'จ่ายบิล',type:'dev',effort:10,pri:'M',dep:['t5']},
+    {id:'t7',name:'Design System',type:'design',effort:10,pri:'M',dep:['t2']},
+    {id:'t8',name:'UI ทุกหน้าจอ',type:'design',effort:14,pri:'H',dep:['t7']},
+    {id:'t9',name:'OTP & 2FA',type:'dev',effort:8,pri:'H',dep:['t3']},
+    {id:'t10',name:'แจ้งเตือนธุรกรรม',type:'dev',effort:8,pri:'M',dep:['t5']},
+    {id:'t11',name:'สลิป & ประวัติ',type:'dev',effort:8,pri:'L',dep:['t5']},
+    {id:'t12',name:'Pen Test ความปลอดภัย',type:'qa',effort:10,pri:'H',dep:['t4','t9']},
+    {id:'t13',name:'ทดสอบการโอนเงิน',type:'qa',effort:9,pri:'H',dep:['t5']},
+    {id:'t14',name:'Load Test',type:'qa',effort:8,pri:'M',dep:['t5']},
+    {id:'t15',name:'Accessibility Test',type:'qa',effort:5,pri:'L',dep:['t8']},
+    {id:'t16',name:'Fraud Detection',type:'dev',effort:12,pri:'M',dep:['t5']},
+    {id:'t17',name:'เอกสาร Audit',type:'qa',effort:6,pri:'M',dep:['t1']},
+    {id:'t18',name:'Go-live & Monitoring',type:'dev',effort:6,pri:'H',dep:['t12','t13','t14']}
+   ]}
+
+];
+
+/* ================= SAVE / STARS / UPGRADES ================= */
+const SAVE_KEY='pmoffice3d-save';
+let SAVE={coins:0,stars:{},up:{},best:{}};
+try{ const j=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(j) SAVE=Object.assign(SAVE,j); }catch(e){}
+LEVELS.forEach(L=>{ try{ const b=localStorage.getItem('pmoffice3d-best-'+L.id); if(b&&!SAVE.best[L.id]) SAVE.best[L.id]=b; }catch(e){} });
+function persist(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
+const OBJ={
+  noBurn:{label:'ไม่มีใคร Burnout',ok:()=>S.burnouts===0,lock:()=>S.burnouts>0},
+  budget25:{label:'งบเหลือ ≥ 25%',ok:()=>S.money>=S.budget*0.25},
+  budget15:{label:'งบเหลือ ≥ 15%',ok:()=>S.money>=S.budget*0.15},
+  bugs1:{label:'บั๊กไม่เกิน 1 ครั้ง',ok:()=>S.bugs<=1,lock:()=>S.bugs>1},
+  bugs2:{label:'บั๊กไม่เกิน 2 ครั้ง',ok:()=>S.bugs<=2,lock:()=>S.bugs>2},
+  noOT:{label:'ใช้ OT ไม่เกิน 1 วัน',ok:()=>S.otTime<=1,lock:()=>S.otTime>1},
+  stake80:{label:'ลูกค้าพอใจ ≥ 80',ok:()=>S.stake>=80},
+  noCut:{label:'ไม่ตัด Scope / ไม่ขอเลื่อน',ok:()=>S.cuts===0&&S.extensions===0,lock:()=>S.cuts>0||S.extensions>0},
+  qual85:{label:'คุณภาพ ≥ 85',ok:()=>S.quality>=85},
+  qual90:{label:'คุณภาพ ≥ 90',ok:()=>S.quality>=90},
+  morale70:{label:'ขวัญทีมตอนจบ ≥ 70',ok:()=>avgMorale()>=70},
+  noExt:{label:'ไม่ขอเลื่อน Deadline',ok:()=>S.extensions===0,lock:()=>S.extensions>0}
+};
+const LOBJ={cafe:['noBurn','budget25'],shop:['bugs1','noOT'],food:['stake80','noCut'],clinic:['qual85','noBurn'],game:['morale70','budget15'],erp:['noExt','bugs2'],bank:['qual90','noBurn']};
+LEVELS.forEach(L=>L.obj=LOBJ[L.id]);
+const starLabels=L=>['ส่งมอบครบทุกงาน'].concat(L.obj.map(k=>OBJ[k].label));
+const popc=n=>(n&1)+((n>>1)&1)+((n>>2)&1);
+const UPG=[
+  {id:'coffee',icon:'☕',name:'เครื่องชงกาแฟพรีเมียม',desc:l=>'พัก/ประชุมแล้วหายเครียดเร็วขึ้น +'+(25*l)+'%'},
+  {id:'chair',icon:'🪑',name:'เก้าอี้ Ergonomic',desc:l=>'ทำงานแล้วเครียดช้าลง −'+(12*l)+'%'},
+  {id:'monitor',icon:'🖥️',name:'จอคู่ + อุปกรณ์โปร',desc:l=>'ทุกคนทำงานเร็วขึ้น +'+(6*l)+'%'},
+  {id:'garden',icon:'🌿',name:'สวนในออฟฟิศ',desc:l=>'ขวัญทีมค่อย ๆ เพิ่ม +'+(0.8*l).toFixed(1)+'/วัน'},
+  {id:'lounge',icon:'🎮',name:'มุมพักผ่อน',desc:l=>'Burnout ลาพักสั้นลง −'+(0.5*l)+' วัน'},
+  {id:'cicd',icon:'🧪',name:'CI/CD + Test อัตโนมัติ',desc:l=>'โอกาสเกิดบั๊ก −'+(15*l)+'%'},
+  {id:'client',icon:'📺',name:'จอ Dashboard ลูกค้า',desc:l=>'ลูกค้าพอใจเริ่ม +'+(5*l)+' และลดช้าลง '+(30*l)+'%'}
+];
+const UCOST=[30,70,130];
+const ul=id=>SAVE.up[id]||0;
+
+/* ================= AUDIO (Web Audio, synthesized) ================= */
+const Snd = (()=>{
+  let ctx=null, master, sfxG, musG, noiseBuf=null, musTimer=null;
+  let sfxOn=true, musOn=true;
+  try{ sfxOn=localStorage.getItem('pmoffice3d-sfx')!=='0'; musOn=localStorage.getItem('pmoffice3d-mus')!=='0'; }catch(e){}
+  function init(){
+    if(ctx){ if(ctx.state==='suspended') ctx.resume().catch(()=>{}); return; }
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    try{ ctx=new AC(); }catch(e){ return; }
+    master=ctx.createGain(); master.gain.value=0.9;
+    const comp=ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+    sfxG=ctx.createGain(); sfxG.gain.value=sfxOn?0.55:0; sfxG.connect(master);
+    musG=ctx.createGain(); musG.gain.value=musOn?0.22:0; musG.connect(master);
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate*0.5,ctx.sampleRate);
+    const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    startMusic();
+  }
+  const ok=()=>ctx&&ctx.state==='running';
+  function tone(f,t0,dur,type,vol,dest,slide){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,t0);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,t0+dur);
+    g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol||0.2,t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.connect(g); g.connect(dest||sfxG); o.start(t0); o.stop(t0+dur+0.05);
+  }
+  function noise(t0,dur,vol,freq,q,dest){
+    const s=ctx.createBufferSource(); s.buffer=noiseBuf;
+    const fl=ctx.createBiquadFilter(); fl.type='bandpass'; fl.frequency.value=freq||3000; fl.Q.value=q||1;
+    const g=ctx.createGain(); g.gain.setValueAtTime(vol,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    s.connect(fl); fl.connect(g); g.connect(dest||sfxG); s.start(t0); s.stop(t0+dur+0.02);
+  }
+  const N=n=>440*Math.pow(2,(n-69)/12);
+  const fx={
+    click(){ tone(900,ctx.currentTime,0.05,'triangle',0.08); },
+    select(){ const t=ctx.currentTime; tone(620,t,0.07,'triangle',0.16); tone(930,t+0.05,0.09,'triangle',0.13); },
+    error(){ const t=ctx.currentTime; tone(180,t,0.12,'square',0.08); tone(150,t+0.1,0.16,'square',0.08); },
+    assign(){ const t=ctx.currentTime; tone(380,t,0.14,'sine',0.3,null,880); tone(1320,t+0.09,0.12,'triangle',0.1); },
+    done(){ const t=ctx.currentTime; [72,76,79,84].forEach((n,i)=>tone(N(n),t+i*0.075,0.28,'triangle',0.2)); tone(N(96),t+0.3,0.4,'sine',0.06); },
+    bug(){ const t=ctx.currentTime; tone(320,t,0.28,'sawtooth',0.1,null,110); tone(240,t+0.14,0.3,'square',0.07,null,80); noise(t,0.2,0.08,800,2); },
+    burnout(){ const t=ctx.currentTime; [67,65,63,58].forEach((n,i)=>tone(N(n),t+i*0.2,0.38,'sine',0.2)); },
+    event(){ const t=ctx.currentTime; [[88,0],[83,0.16],[88,0.32]].forEach(([n,d])=>{ tone(N(n),t+d,0.9,'sine',0.16); tone(N(n+12),t+d,0.5,'sine',0.04); }); },
+    coin(){ const t=ctx.currentTime; tone(N(83),t,0.09,'square',0.09); tone(N(88),t+0.08,0.35,'square',0.09); },
+    talk(){ const t=ctx.currentTime; for(let i=0;i<5;i++) tone(500+Math.random()*400,t+i*0.06,0.06,'sine',0.12); },
+    ot(){ const t=ctx.currentTime; noise(t,0.45,0.18,1200,0.7); tone(200,t,0.4,'sawtooth',0.06,null,700); },
+    otOff(){ const t=ctx.currentTime; tone(N(76),t,0.3,'sine',0.14); tone(N(71),t+0.15,0.4,'sine',0.14); },
+    cut(){ const t=ctx.currentTime; noise(t,0.05,0.25,6000,3); noise(t+0.09,0.05,0.25,5000,3); },
+    unlock(){ const t=ctx.currentTime; tone(N(79),t,0.1,'triangle',0.12); tone(N(86),t+0.07,0.18,'triangle',0.12); },
+    day(){ const t=ctx.currentTime; tone(N(96),t,0.15,'sine',0.05); },
+    type(){ noise(ctx.currentTime,0.025,0.05,2500+Math.random()*2500,4); },
+    hire(){ const t=ctx.currentTime; [67,71,74,79].forEach((n,i)=>tone(N(n),t+i*0.06,0.2,'square',0.06)); },
+    win(){ const t=ctx.currentTime; [[60,64,67],[65,69,72],[67,71,74],[72,76,79,84]].forEach((ch,i)=>ch.forEach(n=>tone(N(n),t+i*0.22,i===3?1.2:0.3,'triangle',0.12))); },
+    lose(){ const t=ctx.currentTime; [[67,0],[63,0.3],[60,0.6]].forEach(([n,d])=>tone(N(n),t+d,0.5,'triangle',0.15)); tone(N(48),t+0.6,1,'sine',0.15); }
+  };
+  function play(name){ if(!ok()||!sfxOn) return; try{ fx[name]&&fx[name](); }catch(e){} }
+  // ---- lo-fi background loop ----
+  const CH=[[53,57,60,64],[52,55,59,62],[50,53,57,60],[48,52,55,59]]; // Fmaj7 Em7 Dm7 Cmaj7
+  const PENTA=[72,74,76,79,81,84];
+  let step=0, nextT=0, tempo=1;
+  function startMusic(){
+    nextT=ctx.currentTime+0.1;
+    musTimer=setInterval(()=>{
+      if(!ok()) return;
+      const spb=60/80/2/tempo; // 8th notes @80bpm
+      while(nextT<ctx.currentTime+0.25){
+        const bar=Math.floor(step/8)%4, s8=step%8, ch=CH[bar];
+        if(musOn){
+          if(s8===0) ch.forEach(n=>{ tone(N(n),nextT,spb*7.5,'triangle',0.05,musG); tone(N(n)*1.004,nextT,spb*7.5,'sine',0.04,musG); });
+          if(s8===0||s8===5) tone(N(ch[0]-12),nextT,spb*2.5,'sine',0.22,musG);
+          if(s8===0||s8===3||s8===6){ const k=ctx.createOscillator(),g=ctx.createGain(); k.frequency.setValueAtTime(110,nextT); k.frequency.exponentialRampToValueAtTime(40,nextT+0.12); g.gain.setValueAtTime(0.35,nextT); g.gain.exponentialRampToValueAtTime(0.0001,nextT+0.16); k.connect(g); g.connect(musG); k.start(nextT); k.stop(nextT+0.2); }
+          if(s8===4) noise(nextT,0.12,0.12,1800,0.8,musG);
+          noise(nextT,0.03,s8%2?0.03:0.05,8000,1,musG);
+          if(Math.random()<0.28) tone(N(pick(PENTA)),nextT,spb*1.8,'sine',0.07,musG);
+        }
+        nextT+=spb; step++;
+      }
+    },90);
+  }
+  function setSfx(v){ sfxOn=v; try{localStorage.setItem('pmoffice3d-sfx',v?'1':'0');}catch(e){} if(sfxG) sfxG.gain.value=v?0.55:0; }
+  function setMus(v){ musOn=v; try{localStorage.setItem('pmoffice3d-mus',v?'1':'0');}catch(e){} if(musG) musG.gain.setTargetAtTime(v?0.22:0,ctx.currentTime,0.1); }
+  return {init,play,setSfx,setMus,get sfx(){return sfxOn;},get mus(){return musOn;},set tempo(v){tempo=v;}};
+})();
+['pointerup','keydown','touchend'].forEach(ev=>addEventListener(ev,()=>Snd.init(),{passive:true}));
+document.addEventListener('click',e=>{ if(e.target.closest('button')) Snd.play('click'); });
+function syncSoundBtns(){ $('#sfxBtn').textContent=Snd.sfx?'🔊':'🔇'; $('#sfxBtn').classList.toggle('off',!Snd.sfx); $('#musBtn').classList.toggle('off',!Snd.mus); }
+$('#sfxBtn').onclick=()=>{ Snd.init(); Snd.setSfx(!Snd.sfx); syncSoundBtns(); };
+$('#musBtn').onclick=()=>{ Snd.init(); Snd.setMus(!Snd.mus); syncSoundBtns(); };
+syncSoundBtns();
+
+/* ================= 3D SCENE ================= */
+const canvas = $('#c');
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-10,10,10,-10,0.1,200);
+let camAz = 0.78, camEl = 0.62, camZoom = 1;
+const camTarget = new THREE.Vector3(0,0.6,0.4);
+
+scene.add(new THREE.HemisphereLight(0xfff8ee,0xb49b7c,0.75));
+const sun = new THREE.DirectionalLight(0xffffff,0.75);
+sun.position.set(9,18,10); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14,near:1,far:60});
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const matCache = {};
+function mat(color,opts){
+  const k = color+'|'+JSON.stringify(opts||{});
+  if(!opts && matCache[k]) return matCache[k];
+  const m = new THREE.MeshStandardMaterial(Object.assign({color,roughness:0.82,metalness:0.02},opts||{}));
+  if(!opts) matCache[k]=m;
+  return m;
+}
+function mesh(geo,color,opts,parent,pos){
+  const m = new THREE.Mesh(geo, color instanceof THREE.Material ? color : mat(color,opts));
+  m.castShadow = true; m.receiveShadow = true;
+  if(pos) m.position.set(pos[0],pos[1],pos[2]);
+  if(parent) parent.add(m);
+  return m;
+}
+const B = (x,y,z)=>new THREE.BoxGeometry(x,y,z);
+
+// room
+const RX=9, RZ=6.6;
+(function buildRoom(){
+  const fc = document.createElement('canvas'); fc.width=fc.height=512;
+  const fx = fc.getContext('2d');
+  for(let i=0;i<8;i++) for(let j=0;j<8;j++){ fx.fillStyle=(i+j)%2?'#e9cfa4':'#e2c494'; fx.fillRect(i*64,j*64,64,64); }
+  const ft = new THREE.CanvasTexture(fc); ft.wrapS=ft.wrapT=THREE.RepeatWrapping; ft.repeat.set(4.5,3.3);
+  const floor = mesh(B(RX*2,0.4,RZ*2), new THREE.MeshStandardMaterial({map:ft,roughness:0.9}), null, scene,[0,-0.2,0]);
+  floor.castShadow=false;
+  mesh(B(RX*2+0.6,0.5,0.3),0x8a6a4a,null,scene,[0,-0.25,RZ+0.15]).castShadow=false;
+  mesh(B(0.3,0.5,RZ*2),0x8a6a4a,null,scene,[RX+0.15,-0.25,0]).castShadow=false;
+  const wallM = mat(0xf7efe2);
+  mesh(B(RX*2,4.6,0.3),wallM,null,scene,[0,2.3,-RZ-0.15]);
+  mesh(B(0.3,4.6,RZ*2),wallM,null,scene,[-RX-0.15,2.3,0]);
+  mesh(B(RX*2,0.25,0.34),0xd9c7ab,null,scene,[0,0.12,-RZ-0.12]);
+  mesh(B(0.34,0.25,RZ*2),0xd9c7ab,null,scene,[-RX-0.12,0.12,0]);
+  // window on back wall
+  mesh(B(4.6,2.2,0.1),0x9fd9f0,{emissive:0x7fc8e6,emissiveIntensity:0.45},scene,[4.6,2.6,-RZ+0.02]);
+  mesh(B(4.8,0.14,0.2),0xffffff,null,scene,[4.6,1.45,-RZ+0.06]);
+  mesh(B(4.8,0.14,0.2),0xffffff,null,scene,[4.6,3.75,-RZ+0.06]);
+  mesh(B(0.12,2.3,0.2),0xffffff,null,scene,[4.6,2.6,-RZ+0.06]);
+  // clock-ish logo on wall
+  mesh(new THREE.CylinderGeometry(0.45,0.45,0.08,24),0xffffff,null,scene,[-RX+0.05,3.4,3.5]).rotation.z=Math.PI/2;
+  // rug
+  const rug = mesh(B(6.5,0.04,4.4),0xd96c4f,null,scene,[0,0.02,1.2]); rug.castShadow=false;
+  const rug2 = mesh(B(6.1,0.05,4.0),0xe8896d,null,scene,[0,0.03,1.2]); rug2.castShadow=false;
+  // plants
+  function plant(x,z,s){
+    const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(s);
+    mesh(new THREE.CylinderGeometry(0.32,0.25,0.6,10),0xc96f4a,null,g,[0,0.3,0]);
+    mesh(new THREE.IcosahedronGeometry(0.55,0),0x3e9b5b,{flatShading:true},g,[0,1.05,0]);
+    mesh(new THREE.IcosahedronGeometry(0.4,0),0x52b56e,{flatShading:true},g,[0.25,1.45,0.1]);
+    scene.add(g);
+  }
+  plant(-RX+0.7,-RZ+0.7,1.2); plant(RX-0.7,-RZ+0.8,1); plant(-RX+0.7,RZ-0.8,0.9);
+  // coffee corner
+  const cf = new THREE.Group(); cf.position.set(-RX+0.7,0,-1.6);
+  mesh(B(1,1,1.6),0x5b6b84,null,cf,[0,0.5,0]);
+  mesh(B(0.5,0.6,0.45),0x2b2f38,null,cf,[0,1.3,-0.3]);
+  mesh(new THREE.CylinderGeometry(0.1,0.08,0.18,10),0xffffff,null,cf,[0.1,1.1,0.35]);
+  mesh(new THREE.CylinderGeometry(0.22,0.22,0.9,12),0x9fd9f0,{transparent:true,opacity:0.8},cf,[0,1.45,0.35]);
+  scene.add(cf);
+  // sofa
+  const so = new THREE.Group(); so.position.set(RX-1.2,0,-RZ+2.4); so.rotation.y=-Math.PI/2;
+  mesh(B(2.6,0.45,0.9),0x14a38b,null,so,[0,0.35,0]);
+  mesh(B(2.6,0.6,0.25),0x0f8a75,null,so,[0,0.8,-0.38]);
+  mesh(B(0.25,0.55,0.9),0x0f8a75,null,so,[-1.3,0.55,0]);
+  mesh(B(0.25,0.55,0.9),0x0f8a75,null,so,[1.3,0.55,0]);
+  scene.add(so);
+})();
+
+// whiteboard (kanban) with live texture
+const wbCanvas = document.createElement('canvas'); wbCanvas.width=640; wbCanvas.height=384;
+const wbTex = new THREE.CanvasTexture(wbCanvas);
+(function(){
+  const g = new THREE.Group(); g.position.set(-3.2,2.4,-RZ+0.08);
+  mesh(B(4.9,3.0,0.12),0x8892a6,null,g,[0,0,0]);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(4.7,2.82), new THREE.MeshBasicMaterial({map:wbTex}));
+  face.position.z=0.07; g.add(face);
+  mesh(B(4.9,0.1,0.3),0x8892a6,null,g,[0,-1.55,0.12]);
+  scene.add(g);
+})();
+function drawWhiteboard(){
+  const x = wbCanvas.getContext('2d'), W=640,H=384;
+  x.fillStyle='#fbfbf8'; x.fillRect(0,0,W,H);
+  if(!S) { wbTex.needsUpdate=true; return; }
+  const todo=S.tasks.filter(t=>t.status==='todo'&&!assigned(t).length);
+  const doing=S.tasks.filter(t=>t.status==='todo'&&assigned(t).length);
+  const done=S.tasks.filter(t=>t.status==='done');
+  const cols=[['TO DO',todo],['DOING',doing],['DONE',done]];
+  cols.forEach((c,i)=>{
+    const cx = 10+i*210;
+    x.fillStyle='#1d2433'; x.font='bold 30px Kanit, sans-serif'; x.fillText(c[0]+'  '+c[1].length, cx+10, 42);
+    x.fillRect(cx+8,52,190,4);
+    if(i>0){ x.fillStyle='#1d243333'; x.fillRect(cx-4,14,3,H-28); }
+    c[1].slice(0,15).forEach((t,j)=>{
+      const r=Math.floor(j/3), k=j%3;
+      x.fillStyle = t.isBug ? '#ff8f8f' : ROLES[t.type].css;
+      x.save(); x.translate(cx+14+k*63, 68+r*60); x.rotate((((j*37)%7)-3)*0.015);
+      x.fillRect(0,0,54,50);
+      x.fillStyle='#ffffffaa'; x.fillRect(6,10,40,5); x.fillRect(6,22,28,5);
+      x.restore();
+    });
+  });
+  wbTex.needsUpdate = true;
+}
+
+// desk slots
+const SLOTS = [[-5.4,-1.6],[-1.8,-1.6],[1.8,-1.6],[5.4,-1.6],[-5.4,2.8],[-1.8,2.8],[1.8,2.8],[5.4,2.8]].map(p=>({x:p[0],z:p[1],used:false}));
+const SKINS=[0xf2c9a0,0xe0ac7e,0xc98d5e,0xf5d5b8,0xd9a066];
+const HAIRS=[0x2b1d14,0x4a2f1b,0x111111,0x7a4b26,0xb5651d,0x3b2a5a];
+const pickables = [];
+
+const chairMat=new THREE.MeshStandardMaterial({color:0x2f3542,roughness:0.8});
+const CHAIRC=[0x2f3542,0x14a38b,0xff6b3d,0x7b2cbf];
+function applyDeskUp(x){
+  const lm=ul('monitor'), lc=ul('chair');
+  x.mon2.visible=lm>=1; x.lamp.visible=lm>=2; x.mon.scale.x=lm>=3?1.35:1;
+  x.head.visible=lc>=2;
+}
+const upG=new THREE.Group(); scene.add(upG);
+const upLeds=[];
+function buildUpgradeDecor(){
+  while(upG.children.length) upG.remove(upG.children[0]);
+  upLeds.length=0;
+  chairMat.color.setHex(CHAIRC[ul('chair')]);
+  if(S) S.members.forEach(m=>applyDeskUp(m.v.extras));
+  // coffee
+  const c=ul('coffee');
+  if(c>=1){ const g=new THREE.Group(); g.position.set(-RX+0.7,0,-0.25); upG.add(g);
+    mesh(B(1,1,1.1),0x5b6b84,null,g,[0,0.5,0]);
+    mesh(B(0.55,0.5,0.45),0xd8342c,null,g,[0,1.25,-0.15]);
+    mesh(B(0.5,0.08,0.3),0xcccccc,null,g,[0,1.04,0.22]);
+    mesh(new THREE.CylinderGeometry(0.07,0.07,0.12,10),0xffffff,null,g,[0.15,1.12,0.25]); }
+  if(c>=2){ const dome=new THREE.Mesh(new THREE.SphereGeometry(0.28,16,10,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:0.35}));
+    dome.position.set(-RX+0.7,1.0,-1.0); upG.add(dome);
+    [[0xd99a5b,-0.08],[0xf5d08a,0.08],[0x8b4a2b,0]].forEach(([col,o],i)=>mesh(new THREE.SphereGeometry(0.08,8,8),col,null,upG,[-RX+0.7+o,1.06,-1.0+(i-1)*0.08])); }
+  if(c>=3){ const cv=document.createElement('canvas'); cv.width=256; cv.height=96; const x=cv.getContext('2d');
+    x.fillStyle='#1d2433'; x.fillRect(0,0,256,96); x.font='bold 54px Kanit, sans-serif'; x.fillStyle='#ffb3c7'; x.shadowColor='#ff5fa2'; x.shadowBlur=18; x.textAlign='center'; x.fillText('COFFEE',128,68);
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(1.8,0.68),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)}));
+    p.position.set(-RX+0.02,3.0,-1.0); p.rotation.y=Math.PI/2; upG.add(p); }
+  // garden
+  const gd=ul('garden');
+  const pl=(x,z,sc,col)=>{ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(sc); upG.add(g);
+    mesh(new THREE.CylinderGeometry(0.3,0.24,0.55,10),0xffffff,null,g,[0,0.28,0]);
+    mesh(new THREE.IcosahedronGeometry(0.5,0),col||0x3e9b5b,{flatShading:true},g,[0,0.95,0]);
+    mesh(new THREE.IcosahedronGeometry(0.36,0),0x6cc77f,{flatShading:true},g,[-0.2,1.3,0.1]); };
+  if(gd>=1){ pl(0.0,-RZ+0.6,1.1); pl(RX-0.7,RZ-0.8,1); }
+  if(gd>=2){ pl(-2.6,RZ-0.5,0.7,0x2f8a4d); pl(2.6,RZ-0.5,0.7,0x2f8a4d); pl(-RX+0.6,1.0,0.8); }
+  if(gd>=3){ const w=new THREE.Group(); w.position.set(-RX+0.05,2.2,4.6); upG.add(w);
+    mesh(B(0.1,2.4,2.4),0x2e7d47,null,w,[0,0,0]);
+    for(let i=0;i<26;i++) mesh(new THREE.IcosahedronGeometry(0.18+Math.random()*0.12,0),pick([0x3e9b5b,0x52b56e,0x2f8a4d,0x7bd389]),{flatShading:true},w,[0.12,rnd(-1.1,1.1),rnd(-1.1,1.1)]); }
+  // lounge
+  const lg=ul('lounge');
+  if(lg>=1){ [[6.1,5.4,0xff6b3d],[7.5,5.1,0x7b2cbf]].forEach(([x,z,col])=>{ const b=mesh(new THREE.SphereGeometry(0.55,16,12),col,null,upG,[x,0.35,z]); b.scale.set(1,0.62,1); }); }
+  if(lg>=2){ const a=new THREE.Group(); a.position.set(RX-0.7,0,4.4); a.rotation.y=-0.45; upG.add(a);
+    mesh(B(0.9,1.9,0.8),0x3d7bff,null,a,[0,0.95,0]);
+    const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.66,0.5),new THREE.MeshBasicMaterial({color:0x7cf5c8})); scr.position.set(0,1.4,0.41); a.add(scr); upLeds.push({m:scr,c1:0x7cf5c8,c2:0xff5fa2,sp:2});
+    mesh(B(0.8,0.1,0.35),0x222222,null,a,[0,1.02,0.5]); }
+  if(lg>=3){ const r=mesh(new THREE.CylinderGeometry(1.5,1.5,0.03,32),0xffc53d,null,upG,[6.8,0.03,5.25]); r.castShadow=false;
+    const fl=new THREE.Group(); fl.position.set(5.0,0,5.9); upG.add(fl);
+    mesh(new THREE.CylinderGeometry(0.04,0.04,1.8,8),0x333333,null,fl,[0,0.9,0]);
+    mesh(new THREE.SphereGeometry(0.25,12,10),0xfff2c4,{emissive:0xffd66b,emissiveIntensity:0.8},fl,[0,1.85,0]); }
+  // ci/cd
+  const ci=ul('cicd');
+  for(let k=0;k<Math.min(ci,2);k++){ const r=new THREE.Group(); r.position.set(0.15+k*0.95,0,-RZ+0.5); upG.add(r);
+    mesh(B(0.8,2.1,0.75),0x1f232b,null,r,[0,1.05,0]);
+    for(let i=0;i<6;i++){ mesh(B(0.66,0.22,0.05),0x2d333f,null,r,[0,0.35+i*0.3,0.38]);
+      const led=new THREE.Mesh(B(0.06,0.06,0.02),new THREE.MeshBasicMaterial({color:0x3ecf8e})); led.position.set(0.25,0.35+i*0.3,0.42); r.add(led); upLeds.push({m:led,c1:0x3ecf8e,c2:0x0b3d2a,sp:3+Math.random()*6}); } }
+  if(ci>=3){ const cv=document.createElement('canvas'); cv.width=256; cv.height=128; const x=cv.getContext('2d');
+    x.fillStyle='#0d1f17'; x.fillRect(0,0,256,128); x.fillStyle='#3ecf8e'; x.font='bold 30px Kanit, sans-serif'; x.fillText('✓ BUILD PASS',18,52); x.font='20px monospace'; x.fillText('tests 248/248',22,92);
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(1.7,0.85),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)})); p.position.set(0.62,3.25,-RZ+0.03); upG.add(p); }
+  // client dashboard
+  const cl=ul('client');
+  if(cl>=1){ const cv=document.createElement('canvas'); cv.width=320; cv.height=192; const x=cv.getContext('2d');
+    x.fillStyle='#1d2433'; x.fillRect(0,0,320,192); x.fillStyle='#fff'; x.font='bold 22px Kanit, sans-serif'; x.fillText('CLIENT DASHBOARD',16,32);
+    [60,95,80,120,140].forEach((h,i)=>{ x.fillStyle=i===4?'#ff6b3d':'#14a38b'; x.fillRect(24+i*56,180-h,38,h); });
+    mesh(B(0.12,1.3,2.1),0x111111,null,upG,[-RX+0.06,2.6,1.7]);
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(1.95,1.15),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)})); p.position.set(-RX+0.13,2.6,1.7); p.rotation.y=Math.PI/2; upG.add(p); }
+  if(cl>=2){ mesh(B(0.3,0.06,1.4),0x8a6a4a,null,upG,[-RX+0.15,1.75,3.6]);
+    [3.2,3.6,4.0].forEach((z,i)=>{ mesh(new THREE.ConeGeometry(0.1,0.3,8),0xffc53d,{metalness:0.6,roughness:0.3},upG,[-RX+0.18,1.93,z]); }); }
+  if(cl>=3){ const t=new THREE.Group(); t.position.set(-6.6,0,5.2); upG.add(t);
+    mesh(new THREE.CylinderGeometry(0.75,0.75,0.08,24),0xffffff,null,t,[0,0.8,0]);
+    mesh(new THREE.CylinderGeometry(0.08,0.12,0.8,8),0x777777,null,t,[0,0.4,0]);
+    [0,2.1,4.2].forEach(a=>mesh(new THREE.CylinderGeometry(0.25,0.25,0.45,12),0x14a38b,null,t,[Math.sin(a)*1.1,0.23,Math.cos(a)*1.1])); }
+}
+function buildDesk(slot){
+  const g = new THREE.Group(); g.position.set(slot.x,0,slot.z);
+  mesh(B(2.5,0.12,1.15),0xd9a066,null,g,[0,0.95,0]);
+  [[-1.1,-0.45],[1.1,-0.45],[-1.1,0.45],[1.1,0.45]].forEach(p=>mesh(B(0.1,0.9,0.1),0x6b4f36,null,g,[p[0],0.45,p[1]]));
+  mesh(B(2.3,0.5,0.06),0xc78f58,null,g,[0,0.62,0.5]);
+  const mon = mesh(B(1.0,0.66,0.07),0x23262e,null,g,[0,1.5,0.12]);
+  mesh(B(0.08,0.3,0.08),0x23262e,null,g,[0,1.13,0.12]);
+  mesh(B(0.4,0.03,0.25),0x23262e,null,g,[0,1.02,0.12]);
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(0.11,20), new THREE.MeshBasicMaterial({color:0x444444}));
+  glow.position.set(0,1.5,0.16); g.add(glow);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.56), new THREE.MeshBasicMaterial({color:0x2a2f3a}));
+  scr.position.set(0,1.5,0.08); scr.rotation.y=Math.PI; g.add(scr);
+  mesh(B(0.7,0.04,0.22),0xeeeeee,null,g,[0,1.03,-0.25]);
+  mesh(new THREE.CylinderGeometry(0.08,0.07,0.16,10),pick([0xff6b3d,0xffffff,0x14a38b,0xffc53d]),null,g,[0.85,1.09,-0.1]);
+  // chair
+  mesh(B(0.75,0.12,0.7),chairMat,null,g,[0,0.52,-1.0]);
+  mesh(B(0.75,0.75,0.12),chairMat,null,g,[0,0.95,-1.38]);
+  const head=mesh(B(0.5,0.3,0.12),chairMat,null,g,[0,1.55,-1.38]);
+  const mon2=mesh(B(0.8,0.55,0.07),0x23262e,null,g,[-0.92,1.45,0.2]); mon2.rotation.y=0.35;
+  const lamp=new THREE.Group(); lamp.position.set(1.0,1.0,0.35); g.add(lamp);
+  mesh(new THREE.CylinderGeometry(0.03,0.03,0.6,6),0x444444,null,lamp,[0,0.3,0]);
+  mesh(new THREE.ConeGeometry(0.16,0.2,12,1,true),0xffc53d,{emissive:0xffc53d,emissiveIntensity:0.6,side:THREE.DoubleSide},lamp,[0,0.6,-0.08]);
+  const extras={head,mon2,lamp,mon};
+  applyDeskUp(extras);
+  mesh(new THREE.CylinderGeometry(0.05,0.05,0.42,8),0x777777,null,g,[0,0.25,-1.0]);
+  // floor ring (stress)
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.5,0.68,32), new THREE.MeshBasicMaterial({color:0x3ecf8e,transparent:true,opacity:0.85,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2; ring.position.set(0,0.04,-1.0); g.add(ring);
+  const selRing = new THREE.Mesh(new THREE.RingGeometry(0.78,0.92,40), new THREE.MeshBasicMaterial({color:0xff6b3d,transparent:true,opacity:0,side:THREE.DoubleSide}));
+  selRing.rotation.x=-Math.PI/2; selRing.position.set(0,0.05,-1.0); g.add(selRing);
+  scene.add(g);
+  return {g,glow,scr,ring,selRing,extras};
+}
+
+function buildPerson(color,skin,hair,opts){
+  opts=opts||{};
+  const p = new THREE.Group();
+  const body = mesh(new THREE.CylinderGeometry(0.34,0.42,0.82,14),color,null,p,[0,1.0,0]);
+  const headG = new THREE.Group(); headG.position.set(0,1.68,0); p.add(headG);
+  mesh(new THREE.SphereGeometry(0.32,18,14),skin,null,headG,[0,0,0]);
+  const hairM = mesh(new THREE.SphereGeometry(0.335,18,10,0,Math.PI*2,0,Math.PI*0.5),hair,null,headG,[0,0.04,-0.02]);
+  hairM.rotation.x = -0.25;
+  mesh(new THREE.SphereGeometry(0.045,8,8),0x111111,null,headG,[-0.11,0.02,0.29]);
+  mesh(new THREE.SphereGeometry(0.045,8,8),0x111111,null,headG,[0.11,0.02,0.29]);
+  mesh(new THREE.SphereGeometry(0.05,8,8),0xff9a8a,{transparent:true,opacity:0.6},headG,[-0.2,-0.08,0.24]);
+  mesh(new THREE.SphereGeometry(0.05,8,8),0xff9a8a,{transparent:true,opacity:0.6},headG,[0.2,-0.08,0.24]);
+  const armL = new THREE.Group(); armL.position.set(-0.42,1.3,0); p.add(armL);
+  const armR = new THREE.Group(); armR.position.set(0.42,1.3,0); p.add(armR);
+  mesh(B(0.17,0.62,0.17),color,null,armL,[0,-0.28,0]);
+  mesh(B(0.17,0.62,0.17),color,null,armR,[0,-0.28,0]);
+  mesh(new THREE.SphereGeometry(0.1,8,8),skin,null,armL,[0,-0.62,0]);
+  mesh(new THREE.SphereGeometry(0.1,8,8),skin,null,armR,[0,-0.62,0]);
+  if(opts.legs){
+    mesh(B(0.2,0.65,0.22),0x2f3542,null,p,[-0.15,0.33,0]);
+    mesh(B(0.2,0.65,0.22),0x2f3542,null,p,[0.15,0.33,0]);
+  }
+  if(opts.tie) mesh(B(0.1,0.4,0.04),0xe5484d,null,p,[0,1.15,0.38]);
+  if(opts.cap){ mesh(new THREE.CylinderGeometry(0.34,0.34,0.12,18),0xff6b3d,null,headG,[0,0.22,0]); mesh(B(0.4,0.04,0.25),0xff6b3d,null,headG,[0,0.18,0.3]); }
+  return {p,body,headG,armL,armR};
+}
+
+// PM avatar
+const pm = buildPerson(0xffffff,0xf2c9a0,0x2b1d14,{legs:true,tie:true,cap:true});
+pm.p.position.set(-5.5,0,-4.2); scene.add(pm.p);
+mesh(B(0.35,0.45,0.04),0x8a6a4a,null,pm.armR,[0.05,-0.6,0.18]);
+const pmTarget = new THREE.Vector3(-5.5,0,-4.2);
+
+// camera
+function updateProjection(){
+  const w = innerWidth, h = innerHeight, a = w/h;
+  let half = Math.max(8.2, 12.6/a);
+  half /= camZoom;
+  camera.left=-half*a; camera.right=half*a; camera.top=half; camera.bottom=-half;
+  camera.updateProjectionMatrix();
+}
+function placeCamera(){
+  const r=40;
+  camera.position.set(camTarget.x+Math.sin(camAz)*Math.cos(camEl)*r, camTarget.y+Math.sin(camEl)*r, camTarget.z+Math.cos(camAz)*Math.cos(camEl)*r);
+  camera.lookAt(camTarget);
+}
+function resize(){ renderer.setSize(innerWidth,innerHeight,false); updateProjection(); }
+addEventListener('resize',resize); resize(); placeCamera();
+
+// pointer
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let pdown=null, dragging=false, pinch=null;
+const pts = new Map();
+canvas.addEventListener('pointerdown',e=>{ pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); pdown={x:e.clientX,y:e.clientY}; dragging=false; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove',e=>{
+  if(!pts.has(e.pointerId)) return;
+  const prev = pts.get(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){
+    const [a,b]=[...pts.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(pinch){ camZoom=clamp(camZoom*d/pinch,0.7,2.4); updateProjection(); }
+    pinch=d; dragging=true; return;
+  }
+  if(!pdown) return;
+  if(Math.hypot(e.clientX-pdown.x,e.clientY-pdown.y)>6) dragging=true;
+  if(dragging){
+    camAz = clamp(camAz-(e.clientX-prev.x)*0.006,-0.15,1.6);
+    camEl = clamp(camEl+(e.clientY-prev.y)*0.004,0.32,1.25);
+    placeCamera();
+  }
+});
+function endPtr(e){
+  pts.delete(e.pointerId); if(pts.size<2) pinch=null;
+  if(pdown && !dragging && pts.size===0) pick3D(e.clientX,e.clientY);
+  if(pts.size===0) pdown=null;
+}
+canvas.addEventListener('pointerup',endPtr);
+canvas.addEventListener('pointercancel',e=>{pts.delete(e.pointerId);pdown=null;pinch=null;});
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); camZoom=clamp(camZoom*(1-e.deltaY*0.0012),0.7,2.4); updateProjection(); },{passive:false});
+$('#zIn').onclick=()=>{camZoom=clamp(camZoom*1.15,0.7,2.4);updateProjection();};
+$('#zOut').onclick=()=>{camZoom=clamp(camZoom/1.15,0.7,2.4);updateProjection();};
+
+function pick3D(x,y){
+  if(!S||S.ended) return;
+  ndc.set(x/innerWidth*2-1, -(y/innerHeight)*2+1);
+  ray.setFromCamera(ndc,camera);
+  const hits = ray.intersectObjects(pickables,true);
+  for(const h of hits){
+    let o=h.object; while(o && o.userData.mid===undefined) o=o.parent;
+    if(o){ const m=S.members.find(mm=>mm.id===o.userData.mid); if(m){ clickMember(m); return; } }
+  }
+  if(!S.selTask && S.selMember){ S.selMember=null; dirty(); }
+}
+
+/* ================= GAME STATE ================= */
+let S = null;
+let uid = 1;
+const taskById = id => S.tasks.find(t=>t.id===id);
+const assigned = t => S.members.filter(m=>m.task===t.id);
+function isBlocked(t){ return t.dep.some(id=>{ const d=taskById(id); return d && d.status==='todo'; }); }
+function active(){ return S.members.filter(m=>m.offUntil<=S.t); }
+function avgMorale(){ return S.members.length? S.members.reduce((a,m)=>a+m.morale,0)/S.members.length : 0; }
+function dirty(){ S && (S._dirty=true); }
+
+function addMember(p){
+  const slot = SLOTS.find(s=>!s.used); if(!slot) return null;
+  slot.used=true;
+  const m = Object.assign({id:uid++,morale:75,stress:15,task:null,busyUntil:0,offUntil:0,onboardUntil:0,switchUntil:0,oneReady:0,state:'idle',slot},p);
+  const desk = buildDesk(slot);
+  const person = buildPerson(ROLES[m.role].hex, pick(SKINS), pick(HAIRS));
+  person.p.position.set(0,0,-1.0); desk.g.add(person.p);
+  desk.g.userData.mid = m.id; pickables.push(desk.g);
+  m.v = Object.assign(desk,person);
+  m.v.phase = Math.random()*6;
+  if(p.spawn){ desk.g.scale.setScalar(0.01); m.v.grow=0; }
+  const lbl = document.createElement('div'); lbl.className='lbl'; $('#labels').appendChild(lbl); m.lbl=lbl; m._lh='';
+  S.members.push(m);
+  return m;
+}
+function removeMember(m){
+  scene.remove(m.v.g); m.slot.used=false;
+  const i=pickables.indexOf(m.v.g); if(i>=0) pickables.splice(i,1);
+  m.lbl.remove(); S.members=S.members.filter(x=>x!==m);
+  if(S.selMember===m) S.selMember=null;
+  dirty();
+}
+
+function newGame(li){
+  if(S){ S.members.slice().forEach(removeMember); }
+  $('#labels').innerHTML='';
+  const L = LEVELS[li];
+  S = { li, L, t:0, speed:0, deadline:L.days, budget:L.budget, money:L.budget, quality:80, stake:70+5*ul('client'), hist:[], marks:[], origDeadline:L.days, ot:false, otTime:0, effMod:1,
+    members:[], tasks:L.tasks.map(t=>Object.assign({},t,{dep:t.dep||[],progress:0,status:'todo',riskSum:0})),
+    feats:L.feats.slice(), log:[], lessons:[], used:{}, nextEvent:rndInt(L.ev[0],L.ev[1]), lastDoneT:0,
+    selTask:null, selMember:null, mode:null, burnouts:0, extensions:0, cuts:0, freelancers:0, lunchReady:0,
+    ended:false, modal:false, bugs:0, idleWaste:0, crs:0, autoPull:true, _dirty:true };
+  L.team.forEach(p=>addMember(Object.assign({},p)));
+  $('#projName').textContent = L.name; Snd.tempo=1;
+  S.hist.push(snap(0));
+  S.log=[]; log('🚀 เริ่มโปรเจกต์ "'+L.name+'" — วางแผนก่อนแล้วกด ▶');
+  pmTarget.set(-5.5,0,-4.2);
+  setSpeed(0);
+  hint('👉 กด 🪄 แจกงานอัตโนมัติ (หรือเลือกเอง) แล้วกด ▶ เพื่อเริ่ม');
+  updateUI(true);
+}
+
+function log(s){ if(!S) return; S.log.unshift('<span style="opacity:.55">D'+(Math.floor(S.t)+1)+'</span> '+s); S.log=S.log.slice(0,40); S._logDirty=true; }
+let hintTimer=null;
+function hint(s,warn,ms){
+  const h=$('#hint'); h.textContent=s; h.className=warn?'warn':'';
+  clearTimeout(hintTimer); if(ms) hintTimer=setTimeout(()=>{ if(h.textContent===s) h.textContent=''; },ms);
+}
+function popup(m,text,color){
+  const pos = m ? new THREE.Vector3().setFromMatrixPosition(m.v.headG.matrixWorld).add(new THREE.Vector3(0,1.1,0)) : new THREE.Vector3(0,3,0);
+  pos.project(camera);
+  const el=document.createElement('div'); el.className='pop'; el.textContent=text; el.style.color=color||'#1d2433';
+  el.style.left=((pos.x+1)/2*innerWidth)+'px'; el.style.top=((1-pos.y)/2*innerHeight)+'px';
+  $('#labels').appendChild(el); setTimeout(()=>el.remove(),1900);
+}
+
+/* ---------- interactions ---------- */
+function clickMember(m){
+  if(S.ended) return;
+  if(S.selTask){ assign(m,S.selTask); S.selTask=null; S.selMember=null; dirty(); return; }
+  S.selMember = S.selMember===m ? null : m;
+  dirty();
+}
+function clickTask(t){
+  if(S.ended) return;
+  if(S.mode==='cut'){ cutTask(t); return; }
+  if(t.status!=='todo') return;
+  if(isBlocked(t)){ const deps=t.dep.map(taskById).filter(d=>d.status==='todo').map(d=>d.name).join(', '); hint('🔒 ต้องรอ: '+deps+' เสร็จก่อน',true,2600); Snd.play('error'); return; }
+  if(S.selMember){ assign(S.selMember,t); S.selMember=null; dirty(); return; }
+  S.selTask = S.selTask===t ? null : t; if(S.selTask) Snd.play('select');
+  if(S.selTask) hint('กดชื่อคนบนการ์ด หรือคลิกตัวละคร (สีเขียว = ตรงสายงาน)',false,3500); else hint('');
+  dirty();
+}
+function assign(m,t){
+  if(t.status!=='todo'||isBlocked(t)) return;
+  if(m.offUntil>S.t){ hint(m.name+' ลาพักอยู่ — มอบหมายไม่ได้',true,2200); return; }
+  if(m.task===t.id) return;
+  if(m.task){ m.switchUntil=S.t+0.3; log('🔀 '+m.name+' สลับงาน (context switch เสียเวลา ~0.3 วัน)'); }
+  m.task=t.id;
+  const n=assigned(t).length;
+  let msg='📌 '+m.name+' รับงาน "'+t.name+'"';
+  if(t.type!==m.role) msg+=' ⚠️ ไม่ตรงสายงาน (ช้าลง 35%, เสี่ยงบั๊ก)';
+  if(n>1) msg+=' 👥 ทำร่วม '+n+' คน (ประสิทธิภาพต่อคนลดลง)';
+  log(msg); hint('',false); Snd.play('assign');
+  pmTarget.set(m.slot.x+1.6,0,m.slot.z+0.2);
+  dirty();
+}
+function unassign(m){ if(m.task){ log('↩️ '+m.name+' วางงาน "'+taskById(m.task).name+'"'); m.task=null; dirty(); } }
+
+function setSpeed(sp){
+  if(!S) return;
+  if(S.modal||S.ended) sp=0;
+  S.speed=sp;
+  document.querySelectorAll('.speed button[data-sp]').forEach(b=>{ b.classList.toggle('on',+b.dataset.sp===sp); b.disabled=S.modal||S.ended; });
+  $('.speed button[data-sp="1"]').classList.toggle('pulse', sp===0 && S.t===0);
+}
+document.querySelectorAll('.speed button[data-sp]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.sp));
+addEventListener('keydown',e=>{ if(e.code==='Space'&&S&&!S.modal&&!S.ended&&$('#start').classList.contains('hide')){ e.preventDefault(); setSpeed(S.speed?0:1);} });
+
+/* ---------- actions ---------- */
+$('#aPull').onclick=()=>{ if(!S||S.ended) return; S.autoPull=!S.autoPull; log(S.autoPull?'🔁 เปิดโหมดหยิบงานเอง':'✋ ปิดโหมดหยิบงานเอง — PM แจกเองทั้งหมด'); if(S.autoPull) S.members.forEach(pullFor); dirty(); };
+$('#autoBtn').onclick=()=>{ if(!S||S.ended) return; let n=0; S.members.forEach(m=>{ if(pullFor(m)) n++; }); S.selTask=null; if(n) Snd.play('assign'); else Snd.play('error'); hint(n?'🪄 แจกงานให้ '+n+' คนแล้ว — กด ▶ เริ่มได้เลย':'ไม่มีงานที่ตรงสายสำหรับคนที่ว่างอยู่ ลองแจกข้ามสายเอง',!n,2600); dirty(); };
+// drag & drop (mouse)
+let drag=null, dragJustEnded=false;
+$('#boardList').addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse'||e.button!==0||!S||S.ended||e.target.closest('[data-assign]')) return;
+  const c=e.target.closest('[data-task]'); if(!c) return;
+  const t=taskById(c.dataset.task); if(t.status!=='todo'||isBlocked(t)) return;
+  drag={t,x:e.clientX,y:e.clientY,on:false};
+});
+addEventListener('pointermove',e=>{
+  if(!drag) return;
+  if(!drag.on && Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8){ drag.on=true; const g=$('#ghost'); g.textContent=ROLES[drag.t.type].icon+' '+drag.t.name; g.style.display='block'; S.selTask=drag.t; dirty(); }
+  if(drag.on){ const g=$('#ghost'); g.style.left=e.clientX+'px'; g.style.top=e.clientY+'px';
+    document.querySelectorAll('.mem.drop').forEach(x=>x.classList.remove('drop'));
+    const el=document.elementFromPoint(e.clientX,e.clientY); const mm=el&&el.closest&&el.closest('[data-mem]'); if(mm) mm.classList.add('drop'); }
+});
+addEventListener('pointerup',e=>{
+  if(!drag) return; const d=drag; drag=null;
+  if(!d.on) return;
+  $('#ghost').style.display='none'; dragJustEnded=true; setTimeout(()=>dragJustEnded=false,50);
+  document.querySelectorAll('.mem.drop').forEach(x=>x.classList.remove('drop'));
+  let m=null;
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const mm=el&&el.closest&&el.closest('[data-mem]');
+  if(mm) m=S.members.find(x=>x.id===+mm.dataset.mem);
+  else if(el===canvas){ ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(ndc,camera);
+    for(const h of ray.intersectObjects(pickables,true)){ let o=h.object; while(o&&o.userData.mid===undefined) o=o.parent; if(o){ m=S.members.find(x=>x.id===o.userData.mid); break; } } }
+  S.selTask=null;
+  if(m) assign(m,d.t); else hint('วางการ์ดบนตัวละครหรือชื่อในรายชื่อทีม',true,2000);
+  dirty();
+});
+$('#aOT').onclick=()=>{ if(!S||S.ended) return; S.ot=!S.ot; Snd.play(S.ot?'ot':'otOff'); Snd.tempo=S.ot?1.25:1; log(S.ot?'🔥 เปิดโหมด OT — ทุกคนเร่งงาน':'🌙 ปิด OT — ทีมกลับบ้านตรงเวลา'); dirty(); };
+$('#a11').onclick=()=>{
+  const m=S&&S.selMember; if(!m) { hint('เลือกคนในทีมก่อน แล้วค่อยกดคุย 1:1',true,2200); return; }
+  if(m.offUntil>S.t){ hint(m.name+' ลาพักอยู่',true,2000); return; }
+  if(m.oneReady>S.t){ hint('เพิ่งคุยกับ '+m.name+' ไป — รออีก '+Math.ceil(m.oneReady-S.t)+' วัน',true,2200); return; }
+  m.busyUntil=S.t+0.5; m.stress=clamp(m.stress-28,0,100); m.morale=clamp(m.morale+8,0,100); m.oneReady=S.t+3;
+  popup(m,'🗣️ คุยกันหน่อย','#14a38b'); Snd.play('talk'); log('🗣️ คุย 1:1 กับ '+m.name+' — เครียดลดลง ขวัญดีขึ้น');
+  pmTarget.set(m.slot.x+1.6,0,m.slot.z+0.2); dirty();
+};
+$('#aLunch').onclick=()=>{
+  if(!S||S.ended) return;
+  if(S.lunchReady>S.t){ hint('เพิ่งเลี้ยงไป — อีก '+Math.ceil(S.lunchReady-S.t)+' วันค่อยเลี้ยงได้อีก',true,2200); return; }
+  const cost=2000*S.members.length; S.money-=cost; S.lunchReady=S.t+5;
+  S.members.forEach(m=>{ m.morale=clamp(m.morale+12,0,100); m.stress=clamp(m.stress-15,0,100); if(m.offUntil<=S.t) popup(m,'🍕 +ขวัญ','#ff6b3d'); });
+  log('🍕 เลี้ยงข้าวทีม '+fmt(cost)); Snd.play('coin'); dirty();
+};
+$('#aHire').onclick=()=>{
+  if(!S||S.ended) return;
+  if(S.freelancers>=2||!SLOTS.some(s=>!s.used)){ hint('จ้างฟรีแลนซ์ได้สูงสุด 2 คน',true,2200); return; }
+  const prev=S.speed; setSpeed(0); S.modal=true; setSpeed(0);
+  openModal(`<div class="ev-ic">🧑‍💻</div><h2>จ้างฟรีแลนซ์</h2><p>ค่าจ้าง ฿15,000 + ฿7,000/วัน · skill ★★★★ · 1 วันแรกยัง onboard (ทำงานได้ครึ่งเดียว)</p>
+   ${Object.keys(ROLES).map(r=>`<button class="choice" data-r="${r}"><b>${ROLES[r].icon} ${ROLES[r].th}</b><small>${r==='dev'?'งานเขียนโค้ด / แก้บั๊ก':r==='design'?'งาน UX/UI':'งานทดสอบ'}</small></button>`).join('')}
+   <button class="choice" data-r=""><b>ยกเลิก</b><small>ลองบริหารทีมเดิมก่อน</small></button>`);
+  $('#modalBody').querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+    closeModal(prev);
+    const r=b.dataset.r; if(!r) return;
+    const names=['เจมส์','ฝน','โอม','ตาล'].filter(n=>!S.members.some(m=>m.name.startsWith(n)));
+    const m=addMember({name:pick(names)+' (FL)',role:r,skill:4,salary:7000,freelance:true,onboardUntil:S.t+1,spawn:true});
+    S.money-=15000; S.freelancers++; mark('🧑‍💻','จ้าง '+m.name); Snd.play('hire');
+    log('🧑‍💻 จ้าง '+m.name+' ('+ROLES[r].th+') — Brooks\'s law: คนใหม่ต้องใช้เวลา onboard'); dirty();
+  });
+};
+$('#aCut').onclick=()=>{
+  if(!S||S.ended) return;
+  S.mode = S.mode==='cut'?null:'cut';
+  if(S.mode==='cut'){ S.selTask=null; hint('✂️ คลิกงาน Priority M/L ที่ยังไม่เริ่ม เพื่อตัดออก (กดปุ่มอีกครั้งเพื่อยกเลิก)',true); }
+  else hint('');
+  dirty();
+};
+function cutTask(t){
+  if(t.status!=='todo'){ return; }
+  if(t.pri==='H'){ hint('งาน High priority = Must-have ตัดไม่ได้',true,2200); return; }
+  if(t.progress>0||assigned(t).length){ hint('งานนี้เริ่มไปแล้ว ตัดไม่ได้',true,2200); return; }
+  t.status='cut'; S.cuts++; mark('✂️','ตัด '+t.name); const p=t.pri==='L'?6:12; S.stake=clamp(S.stake-p,0,100);
+  S.mode=null; hint('',false);
+  Snd.play('cut'); log('✂️ ตัด "'+t.name+'" ออกจาก scope (ลูกค้าพอใจ −'+p+')');
+  addLesson('MoSCoW: เมื่อเวลาไม่พอ ให้ตัด Could/Should-have ก่อน และคุยกับลูกค้าให้ชัดว่าอะไรคือ Must-have');
+  checkWin(); dirty();
+}
+$('#aExt').onclick=()=>{
+  if(!S||S.ended) return;
+  if(S.extensions>=2){ hint('ขอเลื่อนได้สูงสุด 2 ครั้ง',true,2200); return; }
+  const p=15+S.extensions*10; S.deadline+=3; S.extensions++; mark('📅','เลื่อน Deadline +3'); S.stake=clamp(S.stake-p,0,100);
+  log('📅 ขอเลื่อน deadline +3 วัน (ลูกค้าพอใจ −'+p+')'); dirty();
+};
+$('#aBoard').onclick=()=>{ $('#board').classList.toggle('open'); $('#side').classList.remove('open'); };
+$('#aTeam').onclick=()=>{ $('#side').classList.toggle('open'); $('#board').classList.remove('open'); };
+
+/* ---------- simulation ---------- */
+function rate(m,t){
+  let r = m.skill*0.75;
+  r *= 0.55 + m.morale/100*0.6;
+  if(m.stress>80) r*=0.7;
+  if(t.type!==m.role) r*=0.65;
+  if(S.ot) r*=1.4;
+  if(m.onboardUntil>S.t) r*=0.5;
+  r *= S.effMod*(1+0.06*ul('monitor'));
+  const n = assigned(t).filter(x=>x.offUntil<=S.t).length;
+  if(n>1) r*=0.72;
+  return r;
+}
+function freeTasks(){ return S.tasks.filter(t=>t.status==='todo'&&!isBlocked(t)&&!assigned(t).length); }
+function bestTaskFor(m){
+  const f=freeTasks().filter(t=>t.type===m.role);
+  f.sort((a,b)=>(PRIW[b.pri]-PRIW[a.pri])||(b.progress-a.progress));
+  return f[0]||null;
+}
+function pullFor(m){
+  if(m.task||m.offUntil>S.t||m.busyUntil>S.t) return false;
+  const t=bestTaskFor(m); if(!t) return false;
+  m.task=t.id; log('🔁 '+m.name+' หยิบงาน "'+t.name+'" เอง'); dirty(); return true;
+}
+function idleCount(){ return S.members.filter(m=>!m.task&&m.offUntil<=S.t&&m.busyUntil<=S.t).length; }
+function sim(dd){
+  const t0=S.t; S.t+=dd;
+  if(S.ot) S.otTime+=dd;
+  const freeTask = S.tasks.some(t=>t.status==='todo'&&!isBlocked(t)&&!assigned(t).length);
+  let cost=0;
+  for(const m of S.members.slice()){
+    cost += m.salary*((S.ot&&m.state==='work')?1.3:1);
+    if(m.offUntil>S.t){ if(m.state!=='off'){m.state='off';dirty();} m.stress=clamp(m.stress-20*dd,0,100); continue; }
+    if(m.state==='off'){ m.state='idle'; log('👋 '+m.name+' กลับมาทำงานแล้ว'); dirty(); }
+    const t = m.task && taskById(m.task);
+    if(t && t.status!=='todo'){ m.task=null; }
+    let ns;
+    if(m.busyUntil>S.t){ ns='meet'; m.stress-=12*dd*(1+0.25*ul('coffee')); }
+    else if(m.task && m.switchUntil>S.t){ ns='switch'; m.stress+=2*dd; }
+    else if(m.task){
+      ns='work';
+      const mis = t.type!==m.role;
+      const inc = rate(m,t)*dd;
+      t.progress += inc;
+      const risk = (0.05+(mis?0.3:0)+(m.stress>70?0.22:0)+(S.ot?0.08:0)-(m.skill-3)*0.03)*(1-0.15*ul('cicd'));
+      t.riskSum += inc*Math.max(0.01,risk)*(t.isBug?0.5:1);
+      m.stress += (3+(S.ot?8:0)+(mis?1.5:0))*dd*(1-0.12*ul('chair'));
+      if(t.progress>=t.effort) completeTask(t,m);
+    } else { ns='idle'; m.stress-=10*dd*(1+0.25*ul('coffee')); if(S.autoPull && pullFor(m)) ns='work'; else if(freeTask) S.idleWaste+=dd; }
+    if(ns!==m.state){ m.state=ns; }
+    if(m.stress>75) m.morale-=5*dd; else if(m.stress<35) m.morale+=1.5*dd;
+    m.morale+=0.8*ul('garden')*dd;
+    m.stress=clamp(m.stress,0,100); m.morale=clamp(m.morale,0,100);
+    if(m.stress>=100) burnout(m);
+  }
+  S.money -= cost*dd;
+  if(S.t-S.lastDoneT>2) S.stake=clamp(S.stake-1.2*dd*(1-0.3*ul('client')),0,100);
+  if(S.ended) return;
+  const d0=Math.floor(t0), d1=Math.floor(S.t);
+  if(d1>d0) onNewDay(d1);
+  if(S.ended) return;
+  if(S.t>=S.deadline) endGame('deadline');
+  else if(S.money < -S.budget*0.3) endGame('bankrupt');
+}
+function completeTask(t,m){
+  t.status='done'; t.doneT=S.t;
+  S.members.forEach(x=>{ if(x.task===t.id) x.task=null; });
+  const chance = t.riskSum/t.effort;
+  const who = m ? m : null;
+  if(t.type!=='qa' && Math.random()<chance){
+    S.bugs++; S.quality=clamp(S.quality-4,0,100); mark('🐞','บั๊กจาก '+t.name);
+    const b={id:'b'+(uid++),name:'🐞 แก้บั๊ก: '+t.name.replace('🐞 แก้บั๊ก: ',''),type:t.type==='design'?'design':'dev',effort:rndInt(3,5),pri:'H',dep:[],progress:0,status:'todo',riskSum:0,isBug:true};
+    S.tasks.push(b);
+    log('🐞 "'+t.name+'" เสร็จแต่มีบั๊ก! (โอกาสเกิด '+Math.round(chance*100)+'%)');
+    popup(who,'🐞 เจอบั๊ก!','#e5484d'); Snd.play('bug');
+  } else {
+    S.quality=clamp(S.quality+(t.isBug?2:1.5),0,100);
+    log('✅ เสร็จ "'+t.name+'"');
+    popup(who,'✅ เสร็จแล้ว!','#14a38b'); Snd.play('done');
+  }
+  S.stake=clamp(S.stake+(t.pri==='H'?3:1.5),0,100);
+  S.lastDoneT=S.t;
+  // unlocked tasks notice
+  S.tasks.filter(x=>x.status==='todo'&&x.dep.includes(t.id)&&!isBlocked(x)).forEach((x,i)=>{ log('🔓 ปลดล็อก "'+x.name+'"'); if(!i) setTimeout(()=>Snd.play('unlock'),450); });
+  dirty(); checkWin();
+}
+function checkWin(){ if(!S.ended && S.tasks.every(t=>t.status!=='todo')) endGame('done'); }
+function burnout(m){
+  Snd.play('burnout');
+  m.offUntil=S.t+2.5-0.5*ul('lounge'); m.task=null; m.morale=clamp(m.morale-15,0,100); m.stress=55; S.burnouts++; mark('😵',m.name+' Burnout');
+  log('😵 '+m.name+' BURNOUT! ลาพัก 2.5 วัน');
+  popup(m,'😵 Burnout!','#e5484d');
+  addLesson('Burnout เกิดจากแรงกดดันต่อเนื่อง — OT ระยะสั้นช่วยได้ แต่ใช้ยาวจะทำให้ทีมพังและช้ากว่าเดิม (Sustainable pace)');
+  dirty();
+}
+function snap(d){ const sc=S.tasks.filter(t=>t.status!=='cut'); return {d, rem:sc.reduce((a,t)=>a+(t.status==='done'?0:Math.max(0,t.effort-t.progress)),0), scope:sc.reduce((a,t)=>a+t.effort,0)}; }
+function mark(icon,label){ if(S) S.marks.push({t:S.t,icon,label}); }
+function onNewDay(d){
+  S.hist.push(snap(d));
+  Snd.play('day');
+  if(d>=S.nextEvent && S.t<S.deadline-0.5){
+    S.nextEvent = d + rndInt(S.L.ev[0],S.L.ev[1]);
+    triggerEvent();
+  }
+}
+function addLesson(s){ if(!S.lessons.includes(s)) S.lessons.push(s); }
+
+/* ---------- events ---------- */
+const EVENTS = [
+ {id:'scope',w:3,max:3,make(){
+   if(!S.feats.length) return null;
+   const f=S.feats[0];
+   return {icon:'📞',title:'ลูกค้าขอฟีเจอร์เพิ่ม',text:`ลูกค้าโทรมาว่า <b>"ขอเพิ่ม${f}หน่อยได้ไหม ง่าย ๆ เอง"</b> — งานนี้ประเมินแล้วราว 10 point`,
+    lesson:'Scope creep คือฆาตกรเงียบของโปรเจกต์ — ทุกการเปลี่ยนแปลงควรผ่าน Change Request ที่ระบุผลกระทบต่อเวลาและงบชัดเจน',
+    choices:[
+     {label:'รับเลย ไม่อยากขัดใจลูกค้า',sub:'งานเพิ่ม แต่เวลาและงบเท่าเดิม',fx(){ S.feats.shift(); addTask(f,'dev',10,'M'); S.stake=clamp(S.stake+8,0,100); return 'ลูกค้ายิ้มแก้มปริ (+8) แต่ทีมต้องแบกงานเพิ่มโดยไม่มีเวลาเพิ่ม...'; }},
+     {label:'เปิด Change Request (เพิ่มงบ + เวลา)',sub:'คุยตามกระบวนการ',fx(){ S.feats.shift(); addTask(f,'dev',10,'M'); S.money+=45000; S.budget+=45000; S.deadline+=2; S.crs++; S.stake=clamp(S.stake+2,0,100); return 'ลูกค้ายอมจ่ายเพิ่ม ฿45,000 และขยายเวลา 2 วัน — win-win แบบมืออาชีพ'; }},
+     {label:'ปฏิเสธ ขอเก็บไว้เฟสถัดไป',sub:'รักษาแผนเดิม',fx(){ S.feats.shift(); S.stake=clamp(S.stake-10,0,100); return 'แผนยังอยู่ครบ แต่ลูกค้าดูไม่ค่อยพอใจ (−10)'; }}
+    ]};
+ }},
+ {id:'sick',w:2,max:2,make(){
+   const c=active().filter(m=>m.task); if(!c.length) return null; const m=pick(c);
+   return {icon:'🤒',title:m.name+' ไม่สบาย',text:`${m.name} (${ROLES[m.role].th}) ส่งข้อความมาตอนเช้าว่าเป็นไข้ ตัวร้อน แต่บอกว่า "ถ้าจำเป็นทำจากบ้านได้ครับ/ค่ะ"`,
+    lesson:'คนคือทรัพยากรที่สำคัญที่สุด — ฝืนให้คนป่วยทำงาน มักได้งานคุณภาพต่ำและเสี่ยง Burnout ระยะยาว',
+    choices:[
+     {label:'ให้พักเต็มที่ 2 วัน',sub:'งานของเขาจะหยุด — ควรหาคนรับช่วงไหม?',fx(){ m.offUntil=S.t+2; m.morale=clamp(m.morale+8,0,100); dirty(); return m.name+' ซึ้งใจมาก (ขวัญ +8) อย่าลืมพิจารณาย้ายงานด่วนให้คนอื่นนะ'; }},
+     {label:'ขอให้ WFH ทำงานเบา ๆ',sub:'งานเดินต่อ',fx(){ m.stress=clamp(m.stress+30,0,100); m.morale=clamp(m.morale-12,0,100); return 'งานเดินต่อ แต่ '+m.name+' เครียดขึ้นมาก (+30) และรู้สึกไม่ได้รับการดูแล'; }}
+    ]};
+ }},
+ {id:'conflict',w:2,max:1,make(){
+   const a=active().find(m=>m.role==='dev'), b=active().find(m=>m.role==='design'); if(!a||!b) return null;
+   return {icon:'💢',title:'ทีมขัดแย้งกัน',text:`${a.name} (Dev) กับ ${b.name} (Designer) เถียงกันเสียงดัง — "ดีไซน์แบบนี้ทำจริงไม่ได้!" vs "ก็ลองหาวิธีสิ!"`,
+    lesson:'Conflict ที่ไม่จัดการจะลามเป็นปัญหาทีม — PM ควรเป็นตัวกลางให้คุยกันด้วยข้อมูลและเป้าหมายร่วม ไม่ใช่อารมณ์',
+    choices:[
+     {label:'นัดคุยหาทางกลางด้วยกัน',sub:'ทั้งคู่หยุดงานครึ่งวัน',fx(){ [a,b].forEach(m=>{m.busyUntil=S.t+0.5;m.morale=clamp(m.morale+10,0,100);}); S.quality=clamp(S.quality+3,0,100); return 'ได้ข้อสรุปที่ทั้งคู่ยอมรับ ขวัญทีม +10 คุณภาพ +3'; }},
+     {label:'ตัดสินใจเองเลย ใช้ดีไซน์เดิม',sub:'เร็ว แต่มีคนไม่พอใจ',fx(){ b.morale=clamp(b.morale+5,0,100); a.stress=clamp(a.stress+20,0,100); a.morale=clamp(a.morale-8,0,100); return a.name+' ต้องฝืนทำของที่ยาก เครียด +20'; }},
+     {label:'ปล่อยไว้ เดี๋ยวก็ดีกันเอง',sub:'ไม่เสียเวลา',fx(){ [a,b].forEach(m=>{m.morale=clamp(m.morale-18,0,100);m.stress=clamp(m.stress+10,0,100);}); return 'บรรยากาศมาคุทั้งออฟฟิศ ขวัญทั้งคู่ −18'; }}
+    ]};
+ }},
+ {id:'demo',w:2,max:1,make(){
+   if(S.t<3) return null;
+   return {icon:'🎤',title:'ผู้บริหารขอดู Demo พรุ่งนี้!',text:'CEO ฝั่งลูกค้าอยากเห็นความคืบหน้าแบบด่วน ๆ ก่อนประชุมบอร์ด',
+    lesson:'สื่อสารความคืบหน้าแบบโปร่งใสและสม่ำเสมอ ดีกว่าเตรียมโชว์ใหญ่ครั้งเดียว — ความเชื่อใจสร้างจากความจริง',
+    choices:[
+     {label:'ทั้งทีมเตรียม Demo ให้เต็มที่',sub:'ทุกคนหยุดงาน 1 วัน',fx(){ active().forEach(m=>m.busyUntil=S.t+1); S.stake=clamp(S.stake+15,0,100); return 'Demo ปัง! ลูกค้าพอใจ +15 แต่เสียเวลาทั้งทีมไป 1 วัน'; }},
+     {label:'โชว์ของที่มีตามจริง',sub:'ไม่เสียเวลา ผลขึ้นกับความคืบหน้า',fx(){ const p=progress(); const g=p>=0.35; S.stake=clamp(S.stake+(g?8:-8),0,100); return g?'ความคืบหน้า '+Math.round(p*100)+'% ดูดีพอ ลูกค้าชอบความตรงไปตรงมา (+8)':'งานยังน้อยไป ('+Math.round(p*100)+'%) ลูกค้าเริ่มกังวล (−8)'; }},
+     {label:'ขอเลื่อนไปสัปดาห์หน้า',sub:'',fx(){ S.stake=clamp(S.stake-10,0,100); return 'ลูกค้าไม่ค่อยพอใจ (−10)'; }}
+    ]};
+ }},
+ {id:'offer',w:2,max:1,make(){
+   const c=active().filter(m=>!m.freelance && m.skill>=3); if(!c.length||S.members.length<3) return null; const m=pick(c);
+   return {icon:'💼',title:m.name+' ได้ข้อเสนองานใหม่',text:`${m.name} มาบอกตรง ๆ ว่ามีบริษัทอื่นให้เงินเดือนมากกว่า 30% กำลังลังเลอยู่...`,
+    lesson:'การเสียคนเก่งกลางโปรเจกต์แพงกว่าการรักษาไว้เสมอ — ทั้ง knowledge loss และเวลาที่ต้องหาคนใหม่',
+    choices:[
+     {label:'ขึ้นเงินให้ 20%',sub:'ต้นทุนรายวันเพิ่ม',fx(){ m.salary=Math.round(m.salary*1.2); m.morale=clamp(m.morale+15,0,100); return m.name+' ตัดสินใจอยู่ต่อ ขวัญ +15 (ค่าจ้าง '+fmt(m.salary)+'/วัน)'; }},
+     {label:'คุยเรื่องการเติบโต + งานที่ท้าทาย',sub:'ไม่เสียเงิน แต่มีความเสี่ยง',fx(){ if(Math.random()<0.6){ m.morale=clamp(m.morale+10,0,100); return m.name+' ประทับใจที่ได้รับการมองเห็น ตัดสินใจอยู่ต่อ!'; } const n=m.name; removeMember(m); S.members.forEach(x=>x.morale=clamp(x.morale-5,0,100)); return 'น่าเสียดาย '+n+' เลือกไป... งานที่ถืออยู่กลับเข้า To Do'; }},
+     {label:'ยินดีด้วย ปล่อยไป',sub:'',fx(){ const n=m.name; removeMember(m); S.members.forEach(x=>x.morale=clamp(x.morale-6,0,100)); return n+' ลาออก ทีมเหลือ '+S.members.length+' คน ขวัญทีม −6'; }}
+    ]};
+ }},
+ {id:'budget',w:2,max:1,make(){
+   const c=S.tasks.filter(t=>t.status==='todo'&&t.pri!=='H'&&t.progress===0&&!assigned(t).length).sort((a,b)=>PRIW[a.pri]-PRIW[b.pri]);
+   const amt=Math.round(S.budget*0.1/1000)*1000;
+   const ch=[{label:'ยอมรับการตัดงบ',sub:'−'+fmt(amt),fx(){ S.money-=amt; return 'งบหายไป '+fmt(amt)+' ต้องบริหารเงินให้รัดกุมขึ้น'; }}];
+   if(c.length) ch.push({label:'ต่อรอง: ตัดฟีเจอร์ "'+c[0].name+'" แทน',sub:'Scope ลด แต่งบคงเดิม',fx(){ c[0].status='cut'; S.cuts++; S.stake=clamp(S.stake-4,0,100); dirty(); return 'ตัด "'+c[0].name+'" ออก งบไม่โดนหั่น ลูกค้าพอใจ −4'; }});
+   return {icon:'📉',title:'ฝ่ายการเงินตัดงบ 10%',text:'เศรษฐกิจไม่ดี บริษัทลูกค้าขอลดงบโปรเจกต์ลง '+fmt(amt),
+    lesson:'Triple constraint: งบ–เวลา–ขอบเขต (Scope) เปลี่ยนตัวหนึ่ง ต้องปรับอีกตัวเสมอ',choices:ch};
+ }},
+ {id:'shiny',w:2,max:1,make(){
+   const c=active().filter(m=>m.role==='dev'&&!m.freelance); if(!c.length) return null; const m=pick(c);
+   return {icon:'✨',title:'อยากเปลี่ยนไปใช้ Framework ใหม่',text:`${m.name} เห็นคลิปบน X ว่ามี Framework ใหม่ "เร็วกว่าเดิม 10 เท่า!" อยากย้ายโปรเจกต์ไปใช้ตอนนี้เลย`,
+    lesson:'ลดความเสี่ยงด้วย Spike / POC แบบจำกัดเวลา ก่อนตัดสินใจเปลี่ยนเทคโนโลยีกลางทาง',
+    choices:[
+     {label:'ลองเลย! เทคใหม่ต้องดีกว่า',sub:'เสี่ยงสูง',fx(){ if(Math.random()<0.35){ m.skill=Math.min(5,m.skill+1); m.morale=clamp(m.morale+10,0,100); return 'โชคดี! มันเวิร์กจริง '+m.name+' skill +1'; } S.tasks.filter(t=>t.status==='todo'&&t.type==='dev'&&t.progress>0).forEach(t=>t.progress*=0.65); S.quality=clamp(S.quality-6,0,100); return 'พัง... ต้องย้อนกลับ งาน dev ที่ทำค้างเสียไป 35% คุณภาพ −6'; }},
+     {label:'ให้ทำ Spike 1 วันก่อนตัดสินใจ',sub:'เสียเวลาเขา 1 วัน',fx(){ m.busyUntil=S.t+1; m.morale=clamp(m.morale+6,0,100); S.quality=clamp(S.quality+2,0,100); return 'ผล Spike: ยังไม่ mature พอ ใช้ของเดิมไปก่อน — ทีมเห็นด้วยเพราะมีข้อมูล'; }},
+     {label:'ไม่ได้ ยึดตามแผน',sub:'',fx(){ m.morale=clamp(m.morale-10,0,100); return m.name+' หงอยไปเลย ขวัญ −10'; }}
+    ]};
+ }},
+ {id:'prodbug',w:2,max:2,make(){
+   const d=S.tasks.filter(t=>t.status==='done'&&t.type!=='qa'&&!t.isBug); if(!d.length) return null; const t=pick(d);
+   return {icon:'🚨',title:'เจอบั๊กร้ายแรง!',text:`ลูกค้าเจอบั๊กใน "<b>${t.name}</b>" ที่ส่งไปแล้ว ระบบล่มบางส่วน`,
+    lesson:'ยิ่งเจอบั๊กช้า ยิ่งแก้แพง — ลงทุนกับ QA, Test Plan และ Code Review ตั้งแต่ต้น',
+    choices:[
+     {label:'Hotfix ทันที',sub:'เพิ่มงานด่วน Priority H',fx(){ addTask('แก้บั๊ก: '+t.name,'dev',5,'H',true); S.quality=clamp(S.quality-3,0,100); S.stake=clamp(S.stake+3,0,100); return 'เพิ่มงาน Hotfix ใน To Do แล้ว ลูกค้าชอบที่ตอบสนองไว'; }},
+     {label:'จดไว้แก้รอบหน้า',sub:'ไม่เสียเวลาตอนนี้',fx(){ S.quality=clamp(S.quality-10,0,100); S.stake=clamp(S.stake-10,0,100); return 'คุณภาพ −10 ลูกค้าพอใจ −10 (หนี้ทางเทคนิคพอกพูน)'; }}
+    ]};
+ }},
+ {id:'meetings',w:1,max:1,make(){
+   if(S.effMod<1) return null;
+   return {icon:'📆',title:'ลูกค้าขอประชุม Status ทุกวัน',text:'ลูกค้าอยากให้ทั้งทีมเข้าประชุมอัปเดตทุกเช้า วันละ 1 ชั่วโมง',
+    lesson:'ประชุมเยอะ ≠ คืบหน้าเยอะ — หาช่องทางสื่อสารที่ไม่กินเวลาทีม เช่น Weekly report หรือ Dashboard',
+    choices:[
+     {label:'ตกลง ตามใจลูกค้า',sub:'ทีมทำงานช้าลง 10% ตลอดโปรเจกต์',fx(){ S.effMod=0.9; S.stake=clamp(S.stake+10,0,100); return 'ลูกค้าพอใจ +10 แต่ productivity ทีมลดลง 10% ถาวร'; }},
+     {label:'เสนอ Weekly Report + Dashboard แทน',sub:'PM ทำเอง',fx(){ S.stake=clamp(S.stake+4,0,100); return 'ลูกค้ายอมรับ ได้เห็นข้อมูลชัดกว่าเดิม (+4) ทีมไม่เสียเวลา'; }}
+    ]};
+ }},
+ {id:'bonus',w:2,max:1,make(){
+   if(S.stake<72||S.t<4) return null;
+   return {icon:'🎁',title:'ลูกค้าประทับใจ ให้โบนัส!',text:'ลูกค้าชมว่าความคืบหน้าดีเกินคาด ขอมอบงบพิเศษ ฿30,000',
+    lesson:'Contingency budget ช่วยรองรับความเสี่ยงในอนาคต ส่วนการให้รางวัลทีมก็สร้างแรงจูงใจระยะยาว — เลือกให้เหมาะกับสถานการณ์',
+    choices:[
+     {label:'เก็บเป็นงบสำรอง',sub:'+฿30,000',fx(){ S.money+=30000; return 'งบสำรองเพิ่ม ฿30,000'; }},
+     {label:'แบ่งเป็นโบนัสทีม',sub:'+฿10,000 และขวัญทุกคน +15',fx(){ S.money+=10000; S.members.forEach(m=>{m.morale=clamp(m.morale+15,0,100);m.stress=clamp(m.stress-10,0,100);}); return 'ทีมดีใจสุด ๆ ขวัญ +15 ทุกคน'; }}
+    ]};
+ }}
+];
+function addTask(name,type,effort,pri,isBug){
+  S.tasks.push({id:'x'+(uid++),name:(isBug?'🐞 ':'')+name,type,effort,pri,dep:[],progress:0,status:'todo',riskSum:0,isBug:!!isBug,extra:!isBug});
+  dirty();
+}
+function progress(){
+  const sc=S.tasks.filter(t=>t.status!=='cut');
+  const tot=sc.reduce((a,t)=>a+t.effort,0)||1;
+  return sc.reduce((a,t)=>a+(t.status==='done'?t.effort:Math.min(t.progress,t.effort)),0)/tot;
+}
+function triggerEvent(){
+  const pool=[];
+  EVENTS.forEach(e=>{ if((S.used[e.id]||0)>=e.max) return; const inst=e.make(); if(inst) pool.push({e,inst}); });
+  if(!pool.length) return;
+  const tw=pool.reduce((a,p)=>a+p.e.w,0); let r=Math.random()*tw, sel=pool[0];
+  for(const p of pool){ r-=p.e.w; if(r<=0){ sel=p; break; } }
+  S.used[sel.e.id]=(S.used[sel.e.id]||0)+1;
+  showEvent(sel.inst);
+}
+function openModal(html){ $('#modalBody').innerHTML=html; $('#modal').classList.remove('hide'); }
+function closeModal(prev){ $('#modal').classList.add('hide'); S.modal=false; setSpeed(prev||0); dirty(); }
+function showEvent(ev){
+  const prev = S.speed||1;
+  S.modal=true; setSpeed(0); Snd.play('event');
+  openModal(`<div class="ev-ic">${ev.icon}</div><h2>${ev.title}</h2><p>${ev.text}</p><div id="chs">${ev.choices.map((c,i)=>`<button class="choice" data-i="${i}"><b>${c.label}</b>${c.sub?`<small>${c.sub}</small>`:''}</button>`).join('')}</div>`);
+  $('#modalBody').querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+    const c=ev.choices[+b.dataset.i];
+    const res=c.fx();
+    addLesson(ev.lesson);
+    log(ev.icon+' '+ev.title+' → '+c.label); mark(ev.icon,ev.title);
+    $('#chs').innerHTML=`<div class="res"><b>ผลลัพธ์:</b> ${res}</div><div class="lesson"><b>💡 บทเรียน PM:</b> ${ev.lesson}</div><button class="big" id="evGo">ไปต่อ ▶</button>`;
+    $('#evGo').onclick=()=>{ closeModal(prev); if(!S.ended) checkWin(); };
+  });
+}
+
+/* ---------- end ---------- */
+function endGame(reason){
+  if(S.ended) return;
+  S.ended=true; S.modal=false; setSpeed(0);
+  $('#modal').classList.add('hide');
+  const scoped=S.tasks.filter(t=>t.status!=='cut'&&!t.isBug);
+  const totW=scoped.reduce((a,t)=>a+PRIW[t.pri],0)||1;
+  const doneW=scoped.reduce((a,t)=>a+PRIW[t.pri]*(t.status==='done'?1:Math.min(1,t.progress/t.effort)*0.4),0);
+  const completion=clamp(doneW/totW*100,0,100);
+  const openBugs=S.tasks.filter(t=>t.isBug&&t.status==='todo').length;
+  const early=Math.max(0,S.deadline-S.t);
+  const time = reason==='done'?clamp(72+early*9,0,100):reason==='bankrupt'?0:(completion>=99?70:30);
+  const br=S.money/S.budget;
+  const budgetS = br>=0 ? clamp(45+br*200,0,100) : clamp(60+br*200,0,100);
+  const qual=clamp(S.quality-openBugs*5,0,100);
+  const mor=avgMorale();
+  const total = completion*0.35+time*0.15+budgetS*0.15+qual*0.15+S.stake*0.1+mor*0.1;
+  const grade = total>=92?'S':total>=82?'A':total>=70?'B':total>=56?'C':total>=40?'D':'F';
+  const gcol = {S:'#ffc53d',A:'#14a38b',B:'#3d7bff',C:'#f08c00',D:'#e5484d',F:'#8a93a6'}[grade];
+  S.hist.push(snap(S.t));
+  const order='FDCBAS', oldB=SAVE.best[S.L.id]; if(!oldB||order.indexOf(grade)>order.indexOf(oldB)) SAVE.best[S.L.id]=grade;
+  const delivered = reason==='done';
+  let mask=0; if(delivered){ mask|=1; S.L.obj.forEach((k,i)=>{ if(OBJ[k].ok()) mask|=(2<<i); }); }
+  const prevMask=SAVE.stars[S.L.id]||0, newMask=mask&~prevMask;
+  const cGrade={S:60,A:45,B:30,C:20,D:10,F:5}[grade], cStar=popc(newMask)*25, cBudget=Math.max(0,Math.round(S.money/10000));
+  const earned=cGrade+cStar+cBudget;
+  SAVE.coins+=earned; SAVE.stars[S.L.id]=prevMask|mask; persist();
+  const labels=starLabels(S.L);
+  const starHTML=`<div class="starrow">${labels.map((l,i)=>{ const got=mask&(1<<i), nw=newMask&(1<<i); return `<div class="star ${got?'got':''}" style="animation-delay:${i*0.15}s"><span class="s" style="animation-delay:${0.2+i*0.25}s">⭐</span><span>${l}${nw?'<span class="nw">NEW</span>':''}${!delivered&&i>0?'<br><small style="opacity:.6">ต้องส่งงานครบก่อน</small>':''}</span></div>`; }).join('')}</div>
+   <div class="earn">ได้เหรียญ <b>🪙 +${earned}</b><span>เกรด ${grade} +${cGrade}</span>${cStar?`<span>ดาวใหม่ +${cStar}</span>`:''}${cBudget?`<span>งบเหลือ +${cBudget}</span>`:''}<span style="margin-left:auto">รวม 🪙 ${SAVE.coins}</span></div>`;
+  const title = reason==='done' ? '🎉 ส่งมอบโปรเจกต์สำเร็จ!' : reason==='bankrupt' ? '💸 งบบานปลาย — โปรเจกต์ถูกระงับ' : '⏰ หมด Deadline!';
+  const sub = reason==='done' ? (early>=1?'เร็วกว่ากำหนด '+early.toFixed(1)+' วัน':'ทันเส้นตายแบบเฉียดฉิว') : reason==='bankrupt' ? 'ใช้เงินเกินงบไปกว่า 30%' : 'ส่งงานได้ '+Math.round(completion)+'% ของ scope';
+  // auto lessons
+  const L2=S.lessons.slice();
+  if(S.idleWaste>2) L2.unshift('ทรัพยากรว่างงานรวม '+S.idleWaste.toFixed(1)+' วัน-คน ขณะที่ยังมีงานรออยู่ — PM ที่ดีต้องดู Resource utilization และแจกงานล่วงหน้า');
+  if(S.bugs>=3) L2.unshift('เกิดบั๊ก '+S.bugs+' ครั้ง — สาเหตุหลักคือใช้คนผิดสายงาน ความเครียดสูง หรือ OT นาน ๆ (Quality vs Speed)');
+  if(S.otTime>5) L2.unshift('ใช้ OT รวม '+S.otTime.toFixed(1)+' วัน — ได้ความเร็วแลกกับความเครียดและค่าใช้จ่ายที่เพิ่มขึ้น');
+  if(!L2.length) L2.push('บริหารได้ราบรื่นมาก! ลองเล่นด่านที่ยากขึ้นเพื่อเจอ dependency และความเสี่ยงที่ซับซ้อนกว่าเดิม');
+  const row=(n,v)=>`<span>${n}</span><div class="bar"><i style="width:${v}%"></i></div><span>${Math.round(v)}</span>`;
+  $('#endBody').innerHTML=`
+   <div class="endtop"><div class="grade" style="background:${gcol}">${grade}</div><div><h2>${title}</h2><p style="margin:4px 0">${sub}</p><p style="font-family:Kanit;font-size:22px;font-weight:700">คะแนนรวม ${Math.round(total)}/100</p></div></div>
+   ${starHTML}
+   ${burndownHTML()}
+   <div class="sc">${row('Scope ที่ส่งมอบ',completion)}${row('ตรงเวลา',time)}${row('การคุมงบ',budgetS)}${row('คุณภาพ',qual)}${row('ลูกค้าพอใจ',S.stake)}${row('ขวัญทีม',mor)}</div>
+   <div class="facts"><span>💰 งบเหลือ ${fmt(S.money)}</span><span>🐞 บั๊ก ${S.bugs}</span><span>😵 Burnout ${S.burnouts}</span><span>✂️ ตัด scope ${S.cuts}</span><span>📅 เลื่อน ${S.extensions}</span><span>📝 CR ${S.crs}</span><span>🔥 OT ${S.otTime.toFixed(1)} วัน</span></div>
+   <div class="lessons"><h3>💡 บทเรียนจากโปรเจกต์นี้</h3><ul>${L2.slice(0,7).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+   <button class="big" id="again">เล่นด่านนี้อีกครั้ง</button> <button class="big alt" id="menu">เลือกด่าน</button> <button class="big alt" id="toShop">🏢 อัปเกรดออฟฟิศ</button>`;
+  wireBurndown();
+  $('#end').classList.remove('hide'); Snd.play(reason==='done'?'win':'lose');
+  $('#again').onclick=()=>{ $('#end').classList.add('hide'); newGame(S.li); };
+  $('#menu').onclick=()=>{ $('#end').classList.add('hide'); showStart(); };
+  $('#toShop').onclick=()=>{ $('#end').classList.add('hide'); showStart('shop'); };
+}
+
+/* ---------- burndown ---------- */
+let BD=null;
+function burndownHTML(){
+  const H=S.hist; if(H.length<2) return '';
+  const W=640, HH=250, pl=42, pr=14, pt=30, pb=30;
+  const r0=H[0].rem, od=S.origDeadline;
+  const xMax=Math.max(S.deadline,S.t,od), yMax=Math.max(...H.map(h=>h.scope))*1.08||1;
+  const X=d=>pl+d/xMax*(W-pl-pr), Y=v=>pt+(1-v/yMax)*(HH-pt-pb);
+  const ideal=d=>Math.max(0,r0*(1-d/od));
+  let g='';
+  const step=yMax>120?40:yMax>60?20:10;
+  for(let v=0;v<=yMax;v+=step){ g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#1d2433" stroke-opacity=".08"/><text x="${pl-6}" y="${Y(v)+4}" font-size="11" text-anchor="end" fill="#1d2433" fill-opacity=".55">${v}</text>`; }
+  const xs=xMax>20?5:2;
+  for(let d=0;d<=xMax;d+=xs){ g+=`<text x="${X(d)}" y="${HH-pb+16}" font-size="11" text-anchor="middle" fill="#1d2433" fill-opacity=".55">${d}</text>`; }
+  g+=`<text x="${W-pr}" y="${HH-4}" font-size="11" text-anchor="end" fill="#1d2433" fill-opacity=".55">วัน</text><text x="${pl}" y="14" font-size="11" fill="#1d2433" fill-opacity=".55">pt</text>`;
+  // deadline lines
+  if(S.deadline!==od) g+=`<line x1="${X(od)}" x2="${X(od)}" y1="${pt}" y2="${HH-pb}" stroke="#1d2433" stroke-opacity=".25" stroke-dasharray="2 4"/>`;
+  g+=`<line x1="${X(S.deadline)}" x2="${X(S.deadline)}" y1="${pt}" y2="${HH-pb}" stroke="#1d2433" stroke-opacity=".5" stroke-dasharray="2 3"/><text x="${X(S.deadline)-4}" y="${pt+10}" font-size="11" text-anchor="end" fill="#1d2433">Deadline</text>`;
+  // ideal
+  g+=`<line x1="${X(0)}" y1="${Y(r0)}" x2="${X(od)}" y2="${Y(0)}" stroke="#1d2433" stroke-width="2" stroke-dasharray="6 5" stroke-opacity=".6"/>`;
+  const pts=k=>H.map(h=>X(h.d).toFixed(1)+','+Y(h[k]).toFixed(1)).join(' ');
+  g+=`<polygon points="${X(0)},${Y(0)} ${pts('rem')} ${X(H[H.length-1].d)},${Y(0)}" fill="#e8552a" fill-opacity=".08"/>`;
+  g+=`<polyline points="${pts('scope')}" fill="none" stroke="#0f8a75" stroke-width="2" stroke-linejoin="round"/>`;
+  g+=`<polyline points="${pts('rem')}" fill="none" stroke="#e8552a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const last=H[H.length-1];
+  g+=`<circle cx="${X(last.d)}" cy="${Y(last.rem)}" r="4.5" fill="#e8552a" stroke="#fff" stroke-width="2"/>`;
+  // marks
+  const seen={};
+  S.marks.forEach(mk=>{ const x=X(mk.t); const k=Math.round(x/14); const yo=(seen[k]=(seen[k]||0)+1)-1;
+    g+=`<line x1="${x}" x2="${x}" y1="${pt}" y2="${HH-pb}" stroke="#1d2433" stroke-opacity=".07"/><text x="${x}" y="${pt-8-yo*13}" font-size="13" text-anchor="middle"><title>วันที่ ${(mk.t+1).toFixed(1)}: ${mk.label}</title>${mk.icon}</text>`; });
+  g+=`<line id="bdX" x1="0" x2="0" y1="${pt}" y2="${HH-pb}" stroke="#1d2433" stroke-opacity=".45" visibility="hidden"/><circle id="bdDot" r="5" fill="#e8552a" stroke="#fff" stroke-width="2" visibility="hidden"/>`;
+  g+=`<rect id="bdHit" x="${pl}" y="${pt}" width="${W-pl-pr}" height="${HH-pt-pb}" fill="transparent"/>`;
+  BD={X,Y,xMax,pl,pr,W,ideal};
+  // insights
+  const ins=[];
+  const vel=(last.scope-last.rem)/Math.max(0.1,last.d), need=r0/od;
+  ins.push(`Velocity จริง <b>${vel.toFixed(1)} pt/วัน</b> เทียบกับที่แผนต้องการ ${need.toFixed(1)} pt/วัน`+(vel>=need?' ✅':' — ทีมทำได้ช้ากว่าแผน'));
+  const behind=H.find(h=>h.d>0&&h.rem>ideal(h.d)*1.12+2);
+  if(behind) ins.push(`เริ่มหลุดจากแผนตั้งแต่ <b>วันที่ ${behind.d}</b> (คงเหลือ ${Math.round(behind.rem)} pt แต่แผนควรเหลือ ${Math.round(ideal(behind.d))} pt) — ช่วงนั้นลองดูว่ามีคนว่าง งานติด dependency หรือมีเหตุการณ์อะไรเข้ามา`);
+  else ins.push('เส้นงานคงเหลืออยู่ใต้เส้นแผนตลอด แปลว่าทำได้ตามหรือเร็วกว่าแผน 👏');
+  const grow=last.scope-H[0].scope;
+  if(grow>0) ins.push(`Scope โตขึ้น <b>+${Math.round(grow)} pt</b> ระหว่างทาง (ฟีเจอร์ที่รับเพิ่มและบั๊ก) — เส้นสีเขียวที่ยกตัวขึ้นคือสัญญาณ Scope creep`);
+  else if(grow<0) ins.push(`ตัด Scope ไป ${Math.round(-grow)} pt — ช่วยให้ส่งงานทัน แลกกับความพอใจของลูกค้า`);
+  return `<div class="bd" id="bdBox"><h3>📉 Burndown Chart</h3><div class="sub">งานคงเหลือ (story point) ในแต่ละวัน เทียบกับแผน · ชี้เมาส์ดูรายวัน · ไอคอนด้านบน = เหตุการณ์</div>
+   <div class="legend"><span><i style="border-color:#e8552a"></i>งานคงเหลือ</span><span><i style="border-color:#0f8a75"></i>Scope รวม</span><span><i style="border-color:#1d2433;border-top-style:dashed;opacity:.6"></i>แผน (Ideal)</span></div>
+   <svg viewBox="0 0 ${W} ${HH}" role="img" aria-label="Burndown chart">${g}</svg><div class="tip" id="bdTip"></div>
+   <ul>${ins.map(i=>`<li class="insight">${i}</li>`).join('')}</ul></div>`;
+}
+function wireBurndown(){
+  const svg=document.querySelector('#bdBox svg'); if(!svg||!BD) return;
+  const tip=$('#bdTip'), xl=$('#bdX'), dot=$('#bdDot'), H=S.hist;
+  function mv(e){
+    const r=svg.getBoundingClientRect(); const sx=(e.clientX-r.left)/r.width*BD.W;
+    const d=(sx-BD.pl)/(BD.W-BD.pl-BD.pr)*BD.xMax;
+    let best=H[0]; H.forEach(h=>{ if(Math.abs(h.d-d)<Math.abs(best.d-d)) best=h; });
+    const x=BD.X(best.d), y=BD.Y(best.rem);
+    xl.setAttribute('x1',x); xl.setAttribute('x2',x); xl.setAttribute('visibility','visible');
+    dot.setAttribute('cx',x); dot.setAttribute('cy',y); dot.setAttribute('visibility','visible');
+    const ev=S.marks.filter(m=>Math.floor(m.t)===Math.floor(best.d-0.001)||Math.floor(m.t)===Math.floor(best.d)).map(m=>m.icon+' '+m.label).slice(0,3);
+    tip.innerHTML=`<b>วันที่ ${(+best.d).toFixed(best.d%1?1:0)}</b><br>คงเหลือ ${Math.round(best.rem)} pt<br>แผน ${Math.round(BD.ideal(best.d))} pt<br>Scope รวม ${Math.round(best.scope)} pt${ev.length?'<br>'+ev.join('<br>'):''}`;
+    tip.style.display='block';
+    const box=$('#bdBox').getBoundingClientRect(); let lx=e.clientX-box.left+14; if(lx>box.width-170) lx=e.clientX-box.left-170;
+    tip.style.left=lx+'px'; tip.style.top=(r.top-box.top+20)+'px';
+  }
+  svg.addEventListener('pointermove',mv); svg.addEventListener('pointerdown',mv);
+  svg.addEventListener('pointerleave',()=>{ tip.style.display='none'; xl.setAttribute('visibility','hidden'); dot.setAttribute('visibility','hidden'); });
+}
+
+/* ================= UI RENDER ================= */
+function cardHTML(t){
+  const as=assigned(t), bl=t.status==='todo'&&isBlocked(t);
+  const cls=['card','t-'+t.type]; if(bl) cls.push('blocked'); if(t.status==='done') cls.push('done'); if(t.status==='cut') cls.push('cut'); if(t.isBug) cls.push('bug');
+  if(S.selTask===t) cls.push('sel');
+  if(t.status==='todo'&&t.pri!=='H'&&t.progress===0&&!as.length) cls.push('cuttable');
+  let meta='';
+  if(t.status==='todo'){
+    if(bl) meta='🔒 รอ: '+t.dep.map(taskById).filter(d=>d.status==='todo').map(d=>d.name).join(', ');
+    else if(as.length) meta='👤 '+as.map(m=>m.name+(m.offUntil>S.t?' (ลา)':'')).join(', ');
+    else if(t.progress>0) meta='⏸ ค้างไว้ — ยังไม่มีคนทำ';
+    else meta='พร้อมเริ่ม · '+ROLES[t.type].th;
+  }
+  const pct=Math.min(100,t.progress/t.effort*100);
+  let chips='';
+  if(S.selTask===t && !bl){
+    const ms=S.members.filter(m=>m.offUntil<=S.t&&m.task!==t.id).sort((a,b)=>((b.role===t.type)-(a.role===t.type))||(!!a.task-!!b.task));
+    chips=`<div class="chips"><span class="lab">มอบงานนี้ให้:</span>${ms.map(m=>{const rec=m.role===t.type; return `<button class="chip ${rec?'rec':''} ${m.task?'busy':''}" data-assign="${m.id}">${ROLES[m.role].icon} ${m.name}${rec?' <small>ตรงสาย</small>':''}${m.task?' <small>(มีงานอยู่)</small>':''}${m.stress>75?' <small>😰</small>':''}</button>`;}).join('')||'<span class="lab">ไม่มีใครว่าง</span>'}</div>`;
+  }
+  return `<div class="${cls.join(' ')}" data-task="${t.id}"><div class="row"><span>${t.status==='done'?'✅':ROLES[t.type].icon}</span><b>${t.name}</b><span class="pri ${t.pri}">${t.pri}</span></div>
+   <div class="bar"><i data-pb="${t.id}" style="width:${pct}%;background:${ROLES[t.type].css}"></i></div>
+   <div class="meta"><span data-pt="${t.id}">${Math.floor(Math.min(t.progress,t.effort))}/${t.effort} pt</span> · ${meta}</div>${chips}</div>`;
+}
+function renderBoard(){
+  const todo=S.tasks.filter(t=>t.status==='todo'&&!assigned(t).length);
+  todo.sort((a,b)=>(isBlocked(a)-isBlocked(b))||(PRIW[b.pri]-PRIW[a.pri]));
+  const doing=S.tasks.filter(t=>t.status==='todo'&&assigned(t).length);
+  const done=S.tasks.filter(t=>t.status==='done'||t.status==='cut');
+  $('#boardList').innerHTML=
+   `<div class="sec"><span>⚡ Doing</span><span>${doing.length}</span></div>${doing.map(cardHTML).join('')||'<div class="meta" style="padding:4px">ยังไม่มีใครทำงาน</div>'}
+    <div class="sec"><span>📥 To Do</span><span>${todo.length}</span></div>${todo.map(cardHTML).join('')}
+    <div class="sec"><span>✅ Done</span><span>${done.length}</span></div>${done.map(cardHTML).join('')}`;
+  $('#board').classList.toggle('cutmode',S.mode==='cut');
+}
+$('#boardList').addEventListener('click',e=>{
+  if(!S||dragJustEnded) return;
+  const a=e.target.closest('[data-assign]');
+  if(a){ const m=S.members.find(x=>x.id===+a.dataset.assign), t=taskById(a.closest('[data-task]').dataset.task); if(m&&t){ assign(m,t); S.selTask=null; S.selMember=null; hint(''); dirty(); } return; }
+  const c=e.target.closest('[data-task]'); if(c) clickTask(taskById(c.dataset.task));
+});
+function stars(n){ return '★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(5-n)+'</span>'; }
+function stateIcon(m){ return {work:'💻',idle:'☕',meet:'🗣️',switch:'🤯',off:'🏠'}[m.state]||'☕'; }
+function stateText(m){
+  const t=m.task&&taskById(m.task);
+  if(m.offUntil>S.t) return '🏠 ลาพักอีก '+(m.offUntil-S.t).toFixed(1)+' วัน';
+  if(m.busyUntil>S.t) return '🗣️ ประชุม/คุยงาน';
+  if(t&&m.switchUntil>S.t) return '🤯 กำลังสลับงาน';
+  if(t) return '💻 '+t.name;
+  return '☕ ว่าง — รอรับงาน';
+}
+function renderTeam(){
+  const tsel=S.selTask;
+  $('#teamList').innerHTML=S.members.map(m=>`<div class="mem ${S.selMember===m?'sel':''} ${m.offUntil>S.t?'off':''} ${tsel&&tsel.type===m.role?'match':''}" data-mem="${m.id}">
+    <div class="row"><span class="dot" style="background:${ROLES[m.role].css}"></span><b>${m.name}</b><span class="stars">${stars(m.skill)}</span><span data-si="${m.id}">${stateIcon(m)}</span></div>
+    <div class="meta" data-st="${m.id}">${stateText(m)}</div>
+    <div class="mb"><label>ขวัญ</label><div class="bar m"><i data-mm="${m.id}" style="width:${m.morale}%"></i></div><label>เครียด</label><div class="bar s"><i data-ms="${m.id}" style="width:${m.stress}%"></i></div></div></div>`).join('');
+  const m=S.selMember;
+  if(!m){ $('#selCard').innerHTML='<div class="empty">คลิกคนในฉากหรือในรายชื่อ<br>เพื่อดูรายละเอียด / สั่งงาน</div>'; }
+  else{
+    $('#selCard').innerHTML=`<h4><span class="dot" style="background:${ROLES[m.role].css}"></span>${m.name}${m.freelance?' <small style="font-size:11px;opacity:.6">ฟรีแลนซ์</small>':''}</h4>
+     <div>${ROLES[m.role].icon} ${ROLES[m.role].th} · <span class="stars">${stars(m.skill)}</span> · ${fmt(m.salary)}/วัน</div>
+     <div style="margin-top:3px" data-st2="1">${stateText(m)}</div>
+     <div class="btns"><button class="btn" id="b11">🗣️ คุย 1:1</button><button class="btn" id="bUn" ${m.task?'':'disabled'}>✖ วางงาน</button></div>
+     ${m.offUntil>S.t?'':`<div class="meta" style="margin-top:6px">งานที่แนะนำสำหรับ ${m.name}:</div>${(()=>{const f=freeTasks().sort((a,b)=>((b.type===m.role)-(a.type===m.role))||(PRIW[b.pri]-PRIW[a.pri])).slice(0,3); return f.map(t=>`<button class="qtask" data-q="${t.id}">➕ ${ROLES[t.type].icon} ${t.name} <small>${t.type===m.role?'✓ ตรงสาย':'⚠️ ต่างสาย'} · ${t.pri}</small></button>`).join('')||'<div class="meta">ไม่มีงานว่างตอนนี้</div>';})()}`}`;
+    $('#selCard').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ assign(m,taskById(b.dataset.q)); S.selMember=null; dirty(); });
+    $('#b11').onclick=()=>$('#a11').click();
+    $('#bUn').onclick=()=>unassign(m);
+  }
+  const daily=S.members.reduce((a,m)=>a+m.salary,0)*(S.ot?1.3:1);
+  $('#burnRate').textContent='ค่าจ้าง '+fmtK(daily)+'/วัน';
+}
+$('#teamList').addEventListener('click',e=>{ const c=e.target.closest('[data-mem]'); if(c&&S){ const m=S.members.find(x=>x.id===+c.dataset.mem); if(m) clickMember(m);} });
+
+let uiAcc=0;
+function updateUI(force){
+  if(!S) return;
+  if(S._dirty||force){
+    S._dirty=false; renderBoard(); renderTeam(); drawWhiteboard();
+    $('#aOT').classList.toggle('on',S.ot);
+    $('#aPull').classList.toggle('on',S.autoPull); $('#pullTxt').textContent=S.autoPull?'เปิดอยู่':'ปิดอยู่';
+    const ic=idleCount(); $('#idleBadge').innerHTML=ic?`<span class="idlebadge">☕ ว่าง ${ic}</span>`:'';
+    $('#aCut').classList.toggle('on',S.mode==='cut');
+    $('#lunchCost').textContent=S.lunchReady>S.t?'รออีก '+Math.ceil(S.lunchReady-S.t)+' วัน':fmt(2000*S.members.length);
+    $('#extCost').textContent=S.extensions>=2?'ใช้ครบแล้ว':'ลูกค้าพอใจ −'+(15+S.extensions*10);
+    $('#a11 .c').textContent=S.selMember?'กับ '+S.selMember.name:'เลือกคนก่อน';
+    $('#aHire').disabled=S.freelancers>=2;
+    $('#aExt').disabled=S.extensions>=2;
+  }
+  if(S.L.obj){ const oh=starLabels(S.L).map((l,i)=>{ if(i===0) return `<span class="obj">⭐ ${l}</span>`; const o=OBJ[S.L.obj[i-1]]; const st=o.lock&&o.lock()?'bad':o.ok()?'ok':''; return `<span class="obj ${st}">⭐ ${l}${st==='ok'?' ✓':''}</span>`; }).join('');
+    if(oh!==S._oh){ S._oh=oh; $('#objBox').innerHTML=oh; } }
+  const day=Math.min(S.deadline,Math.floor(S.t)+1);
+  $('#sDay').textContent=day+'/'+S.deadline;
+  $('#sDay').className='num '+(S.deadline-S.t<3?'bad':'');
+  $('#sDayBar').style.width=(S.t/S.deadline*100)+'%';
+  $('#sMoney').textContent=fmtK(S.money); $('#sMoney').className='num '+(S.money<S.budget*0.15?'bad':'');
+  $('#sMoneyBar').style.width=clamp(S.money/S.budget*100,0,100)+'%';
+  const p=progress(); $('#sProg').textContent=Math.round(p*100)+'%'; $('#sProgBar').style.width=(p*100)+'%';
+  $('#sProgBar').style.background = p >= S.t/S.deadline ? 'var(--teal)' : 'var(--red)';
+  const q=Math.round(S.quality); $('#sQual').textContent=q; $('#sQual').className='num '+(q<60?'bad':q>=85?'good':'');
+  const sk=Math.round(S.stake); $('#sStake').textContent=(sk>=75?'😊 ':sk>=50?'😐 ':'😠 ')+sk; $('#sStake').className='num '+(sk<50?'bad':'');
+  const mo=Math.round(avgMorale()); $('#sMorale').textContent=mo; $('#sMorale').className='num '+(mo<45?'bad':mo>=80?'good':'');
+  // live bars
+  S.tasks.forEach(t=>{ const b=document.querySelector('[data-pb="'+t.id+'"]'); if(b) b.style.width=Math.min(100,t.progress/t.effort*100)+'%'; const tx=document.querySelector('[data-pt="'+t.id+'"]'); if(tx) tx.textContent=Math.floor(Math.min(t.progress,t.effort))+'/'+t.effort+' pt'; });
+  S.members.forEach(m=>{
+    const a=document.querySelector('[data-mm="'+m.id+'"]'); if(a) a.style.width=m.morale+'%';
+    const b=document.querySelector('[data-ms="'+m.id+'"]'); if(b) b.style.width=m.stress+'%';
+    const c=document.querySelector('[data-si="'+m.id+'"]'); if(c) c.textContent=stateIcon(m);
+    const d=document.querySelector('[data-st="'+m.id+'"]'); if(d) d.textContent=stateText(m);
+  });
+  if(S.selMember){ const e=document.querySelector('[data-st2]'); if(e) e.textContent=stateText(S.selMember); }
+}
+
+/* ================= LOOP ================= */
+const clock = new THREE.Clock();
+const tmpV = new THREE.Vector3();
+const cGreen=new THREE.Color(0x3ecf8e), cYel=new THREE.Color(0xffc53d), cRed=new THREE.Color(0xe5484d);
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.1), T=clock.elapsedTime;
+  if(S && !S.ended && !S.modal && S.speed>0) sim(dt*S.speed/DAY_SEC);
+  if(S){
+    for(const m of S.members){
+      const v=m.v;
+      if(v.grow!==undefined && v.grow<1){ v.grow=Math.min(1,v.grow+dt*1.8); const s=1-Math.pow(1-v.grow,3); v.g.scale.setScalar(Math.max(0.01,s)); }
+      const off=m.offUntil>S.t; v.p.visible=!off;
+      const ph=T*1.0+v.phase;
+      const working=m.state==='work' && S.speed>0;
+      if(working && !S.modal && Math.random()<dt*(S.ot?5:3)) Snd.play('type');
+      if(working){
+        const f=S.ot?22:14;
+        v.armL.rotation.x=-1.1+Math.sin(T*f+v.phase)*0.25; v.armR.rotation.x=-1.1+Math.cos(T*f+v.phase)*0.25;
+        v.headG.rotation.y=Math.sin(ph*0.7)*0.12; v.headG.rotation.x=0.12;
+        v.p.position.y=Math.abs(Math.sin(T*f*0.5))*0.02;
+      } else if(m.state==='meet'){
+        v.armL.rotation.x=-0.3; v.armR.rotation.x=-0.6+Math.sin(T*4)*0.4;
+        v.headG.rotation.x=Math.sin(T*5)*0.15; v.headG.rotation.y=0; v.p.position.y=0;
+      } else if(m.state==='switch'){
+        v.headG.rotation.y=Math.sin(T*9)*0.35; v.armL.rotation.x=-2.6; v.armR.rotation.x=-2.6; v.p.position.y=0;
+      } else {
+        v.armL.rotation.x=-0.15; v.armR.rotation.x=-0.15+Math.sin(ph)*0.05;
+        v.headG.rotation.y=Math.sin(ph*0.6)*0.6; v.headG.rotation.x=-0.05; v.p.position.y=0;
+      }
+      const sc = m.stress<50 ? cGreen.clone().lerp(cYel,m.stress/50) : cYel.clone().lerp(cRed,(m.stress-50)/50);
+      v.ring.material.color.copy(sc); v.ring.visible=!off;
+      v.glow.material.color.setHex(working?ROLES[m.role].hex:0x444444);
+      v.scr.material.color.setHex(working?0xbfe3ff:0x2a2f3a);
+      v.selRing.material.opacity = S.selMember===m ? 0.6+Math.sin(T*6)*0.3 : (S.selTask&&S.selTask.type===m.role&&!off?0.35:0);
+      v.selRing.material.color.setHex(S.selMember===m?0xff6b3d:0x14a38b);
+      // label
+      v.headG.getWorldPosition(tmpV); tmpV.y+=0.75; tmpV.project(camera);
+      const x=(tmpV.x+1)/2*innerWidth, y=(1-tmpV.y)/2*innerHeight;
+      m.lbl.style.left=x+'px'; m.lbl.style.top=y+'px';
+      const t=m.task&&taskById(m.task);
+      const pct=t?Math.min(100,t.progress/t.effort*100):0;
+      const key=m.name+stateIcon(m)+(t?t.id:'')+Math.round(pct)+(off?'o':'')+(m.onboardUntil>S.t?'n':'');
+      if(key!==m._lh){
+        m._lh=key;
+        m.lbl.innerHTML=`<b>${m.name}</b> ${off?'🏠':stateIcon(m)}${m.onboardUntil>S.t?' 🔰':''}${t?`<span class="tn">${t.name}</span><div class="lb"><i style="width:${pct}%;background:${ROLES[t.type].css}"></i></div>`:off?'<span class="tn">ลาพัก</span>':''}`;
+      }
+      m.lbl.classList.toggle('sel',S.selMember===m);
+      m.lbl.classList.toggle('match',!!(S.selTask&&S.selTask.type===m.role&&!off));
+      m.lbl.classList.toggle('idle',!off&&!m.task&&m.busyUntil<=S.t&&!S.selTask);
+    }
+    uiAcc+=dt; if(uiAcc>0.12||S._dirty){ uiAcc=0; updateUI(); }
+  }
+  // PM walk
+  const d=tmpV.copy(pmTarget).sub(pm.p.position); d.y=0; const dist=d.length();
+  if(dist>0.08){
+    d.normalize(); pm.p.position.addScaledVector(d,Math.min(dist,dt*4.2));
+    pm.p.rotation.y=Math.atan2(d.x,d.z);
+    pm.p.position.y=Math.abs(Math.sin(T*12))*0.08;
+    pm.armL.rotation.x=Math.sin(T*12)*0.6; pm.armR.rotation.x=-Math.sin(T*12)*0.3-0.4;
+  } else {
+    pm.p.position.y=0; pm.armL.rotation.x=0; pm.armR.rotation.x=-0.5;
+    if(S&&S.selMember){ const s=S.selMember.slot; pm.p.rotation.y=Math.atan2(s.x-pm.p.position.x,(s.z-1)-pm.p.position.z); }
+  }
+  upLeds.forEach((l,i)=>l.m.material.color.setHex(Math.sin(T*l.sp+i)>-0.2?l.c1:l.c2));
+  renderer.render(scene,camera);
+}
+
+/* ================= START ================= */
+function renderShop(){
+  $('#coinTxt').textContent='🪙 '+SAVE.coins;
+  $('#shop').innerHTML=UPG.map(u=>{ const l=ul(u.id), max=l>=3, cost=UCOST[l];
+    return `<div class="up"><div class="ui">${u.icon}</div><div><h4>${u.name}</h4><div class="pips">${[0,1,2].map(i=>`<i class="${i<l?'on':''}"></i>`).join('')}</div><div class="ud">${l?'ตอนนี้: '+u.desc(l):'ยังไม่มี'}${max?'':'<br>ถัดไป: '+u.desc(l+1)}</div></div>
+      <button class="buy" data-up="${u.id}" ${max||SAVE.coins<cost?'disabled':''}>${max?'MAX':'🪙 '+cost}</button></div>`; }).join('');
+  $('#shop').querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{ const id=b.dataset.up, l=ul(id), cost=UCOST[l]; if(l>=3||SAVE.coins<cost) return;
+    SAVE.coins-=cost; SAVE.up[id]=l+1; persist(); buildUpgradeDecor(); Snd.play('hire'); renderShop(); });
+}
+function setTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  $('#levels').style.display=t==='levels'?'':'none'; $('#shopPane').style.display=t==='shop'?'':'none';
+  $('#start').classList.toggle('shop',t==='shop');
+  if(t==='shop'){ renderShop(); camAz=0.78; camEl=0.62; camZoom=innerWidth>980?1.15:1; camTarget.set(innerWidth>980?-3.2:0,0.6,0.4); }
+  else { camTarget.set(0,0.6,0.4); camZoom=1; }
+  updateProjection(); placeCamera();
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+function showStart(tab){
+  const best=SAVE.best;
+  $('#coinTxt').textContent='🪙 '+SAVE.coins;
+  $('#levels').innerHTML=LEVELS.map((L,i)=>`<button class="lv" data-li="${i}"><div class="lvh"><span class="df" style="background:${L.dcol}">${L.diff}</span><span style="font-size:22px">${L.icon}</span></div>
+   <h3>${L.name}</h3><p>${L.desc}</p><div class="spec"><span>👥 ${L.team.length} คน</span><span>📋 ${L.tasks.length} งาน</span><span>⏳ ${L.days} วัน</span><span>💰 ${fmtK(L.budget)}</span></div>
+   <div class="lvh" style="margin-top:6px"><span class="stars3">${[0,1,2].map(i=>(SAVE.stars[L.id]||0)&(1<<i)?'<b>★</b>':'★').join('')}</span><span class="best" style="margin:0">${best[L.id]?'🏆 '+best[L.id]:''}</span></div>
+   <div class="objs">${starLabels(L).map((l,i)=>`<div class="${(SAVE.stars[L.id]||0)&(1<<i)?'got':''}">⭐ ${l}</div>`).join('')}</div></button>`).join('');
+  $('#levels').querySelectorAll('.lv').forEach(b=>b.onclick=()=>{ setTab('levels'); $('#start').classList.add('hide'); newGame(+b.dataset.li); });
+  $('#start').classList.remove('hide');
+  setTab(tab||'levels');
+}
+drawWhiteboard();
+buildUpgradeDecor();
+showStart();
+animate();
+window.__pm = { get S(){return S;}, newGame, sim:(d)=>sim(d), endGame, SAVE:()=>SAVE, buildUpgradeDecor };
+})();
+</script>
+</body>
+</html>

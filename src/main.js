@@ -333,6 +333,7 @@ function buildUpgradeDecor(){
   upLeds.length=0;
   chairMat.color.setHex(CHAIRC[ul('chair')]);
   if(S) S.members.forEach(m=>applyDeskUp(m.v.extras));
+  DEMO.forEach(d=>applyDeskUp(d.v.extras));
   // coffee
   const c=ul('coffee');
   if(c>=1){ const g=new THREE.Group(); g.position.set(-RX+0.7,0,-0.25); upG.add(g);
@@ -422,8 +423,9 @@ function makeMonitor(w,h,cy){ // cy = ความสูงกลางจอจ
   mesh(new THREE.CylinderGeometry(0.17,0.19,0.025,20),metalM,null,g,[0,top+0.012,0.05]);
   return {g,scr};
 }
+const deskGroups=[];  // ใช้เป็นสิ่งกีดขวางให้ PM เดินอ้อม
 function buildDesk(slot){
-  const g = new THREE.Group(); g.position.set(slot.x,0,slot.z);
+  const g = new THREE.Group(); g.position.set(slot.x,0,slot.z); deskGroups.push(g);
   mesh(RB(2.5,0.1,1.15,0.04,2),deskTopM,null,g,[0,0.96,0]);
   [-1.08,1.08].forEach(x=>{
     [-0.45,0.45].forEach(z=>mesh(RB(0.08,0.9,0.08,0.03,1),metalM,null,g,[x,0.46,z]));
@@ -568,6 +570,114 @@ const pm = buildPerson(0xffffff,0xf2c9a0,0x2b1d14,{legs:true,tie:true,cap:true})
 pm.p.position.set(-5.5,0,-4.2); scene.add(pm.p);
 mesh(B(0.35,0.45,0.04),0x8a6a4a,null,pm.armR,[0.05,-0.6,0.18]);
 const pmTarget = new THREE.Vector3(-5.5,0,-4.2);
+
+/* ---------- PM pathfinding: เดินอ้อมโต๊ะ (BFS บนกริด + ตัดมุมด้วย line-of-sight) ---------- */
+const GC=0.25, GX0=-RX+0.45, GZ0=-RZ+0.45, GW=Math.floor((2*RX-0.9)/GC)+1, GH=Math.floor((2*RZ-0.9)/GC)+1;
+let pmPath=[], pmPathKey='';
+function liveDesks(){ return deskGroups.filter(g=>{ for(let o=g;o;o=o.parent){ if(!o.visible) return false; if(o===scene) return true; } return false; }); }
+function deskBlocker(desks){
+  // โต๊ะกว้าง 2.5 ลึก 1.15 + เก้าอี้/คนด้านหลัง (z−1.45) ขยายเผื่อตัว PM 0.3
+  const rs=desks.map(g=>[g.position.x-1.55,g.position.x+1.55,g.position.z-1.75,g.position.z+0.9]);
+  const blk=(x,z)=>x<GX0||x>GX0+(GW-1)*GC||z<GZ0||z>GZ0+(GH-1)*GC||rs.some(r=>x>r[0]&&x<r[1]&&z>r[2]&&z<r[3]);
+  blk.rs=rs; return blk;
+}
+// เส้นตรง a→b ไม่ทะลุโต๊ะ (slab test แบบแม่นยำ ไม่ใช่สุ่มจุด จะได้ไม่เฉียดมุมโต๊ะ)
+function segClear(ax,az,bx,bz,rs){
+  const dx=bx-ax, dz=bz-az;
+  return !rs.some(r=>{ let t0=0,t1=1;
+    for(const [p,d,lo,hi] of [[ax,dx,r[0],r[1]],[az,dz,r[2],r[3]]]){
+      if(Math.abs(d)<1e-9){ if(p<=lo||p>=hi) return false; continue; }
+      let u=(lo-p)/d, v=(hi-p)/d; if(u>v) [u,v]=[v,u]; t0=Math.max(t0,u); t1=Math.min(t1,v); if(t0>=t1) return false; }
+    return true; });
+}
+function findPath(from,to,blk){
+  const clear=(ax,az,bx,bz)=>!blk(bx,bz)&&segClear(ax,az,bx,bz,blk.rs);
+  const ci=x=>clamp(Math.round((x-GX0)/GC),0,GW-1), cj=z=>clamp(Math.round((z-GZ0)/GC),0,GH-1);
+  const cx=i=>GX0+i*GC, cz=j=>GZ0+j*GC, free=(i,j)=>!blk(cx(i),cz(j));
+  // เป้าหมายอยู่ในโต๊ะ → หาช่องว่างที่ใกล้ที่สุด
+  let gx=to.x, gz=to.z, gi=ci(gx), gj=cj(gz);
+  if(blk(gx,gz)){ let best=null,bd=1e9;
+    for(let r=1;r<16&&!best;r++) for(let i=gi-r;i<=gi+r;i++) for(let j=gj-r;j<=gj+r;j++){
+      if(i<0||j<0||i>=GW||j>=GH||!free(i,j)) continue; const d=Math.hypot(cx(i)-to.x,cz(j)-to.z); if(d<bd){ bd=d; best=[i,j]; } }
+    if(!best) return [new THREE.Vector3(to.x,0,to.z)];
+    [gi,gj]=best; gx=cx(gi); gz=cz(gj); }
+  const goal=new THREE.Vector3(gx,0,gz), stuck=blk(from.x,from.z);
+  if(!stuck&&clear(from.x,from.z,gx,gz)) return [goal];
+  // BFS 8 ทิศ (ไม่ตัดมุมโต๊ะ); ถ้า PM ติดอยู่ในโต๊ะ (โต๊ะเพิ่งงอกทับ) ให้เดินผ่านช่องทึบได้จนกว่าจะออกมา
+  // หยุดที่ช่องแรกที่มองเห็นเป้าหมายตรง ๆ (เป้าหมายอาจอยู่ในช่องกริดที่ติดขอบโต๊ะ)
+  let si=ci(from.x), sj=cj(from.z);
+  if(!stuck&&!free(si,sj)){ let bd=1e9; const i0=si,j0=sj;   // ยืนชิดโต๊ะ: เริ่มจากช่องว่างข้าง ๆ ที่เดินไปถึงตรง ๆ
+    for(let i=i0-2;i<=i0+2;i++) for(let j=j0-2;j<=j0+2;j++){ if(i<0||j<0||i>=GW||j>=GH||!free(i,j)||!clear(from.x,from.z,cx(i),cz(j))) continue;
+      const d=Math.hypot(cx(i)-from.x,cz(j)-from.z); if(d<bd){ bd=d; si=i; sj=j; } } }
+  const prev=new Int32Array(GW*GH).fill(-1), q=[si+sj*GW];
+  prev[q[0]]=q[0]; let end=-1;
+  for(let h=0;h<q.length&&end<0;h++){ const c=q[h], i=c%GW, j=(c-i)/GW, esc=!free(i,j);
+    for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
+      const ni=i+di, nj=j+dj; if(ni<0||nj<0||ni>=GW||nj>=GH) continue; const n=ni+nj*GW; if(prev[n]>=0) continue;
+      if(!esc&&(!free(ni,nj)||(di&&dj&&(!free(i+di,j)||!free(i,j+dj))))) continue;
+      prev[n]=c; if(free(ni,nj)&&clear(cx(ni),cz(nj),gx,gz)){ end=n; break; } q.push(n); } }
+  if(end<0) return [goal];
+  const cells=[goal]; for(let c=end;c!==prev[c];c=prev[c]) cells.unshift(new THREE.Vector3(cx(c%GW),0,cz((c-c%GW)/GW)));
+  if(stuck) return cells;
+  const out=[]; let p=from, k=0;
+  while(k<cells.length){ let j=cells.length-1; while(j>k&&!clear(p.x,p.z,cells[j].x,cells[j].z)) j--; out.push(cells[j]); p=cells[j]; k=j+1; }
+  return out;
+}
+
+/* ---------- เมนูหลักแบบ "วิดีโอสด": ทีมเดโมทำงาน + PM เดินตรวจโต๊ะ + กล้องแพนช้า ๆ ---------- */
+let menuOn=false, curTab='levels';
+const DEMO=[0,1,2,4,5,6].map((si,i)=>{
+  const role=['dev','design','qa','dev','qa','design'][i], slot=SLOTS[si];
+  const desk=buildDesk(slot), person=buildPerson(ROLES[role].hex,pick(SKINS),pick(HAIRS));
+  person.p.position.set(0,0,-1.0); desk.g.add(person.p); desk.g.visible=false;
+  return {v:Object.assign(desk,person),role,slot,state:'work',until:rnd(2,8),phase:Math.random()*6};
+});
+let demoFocus=null, demoPMNext=0;
+function animDemo(dt,T,cam){
+  const shopHide=document.body.classList.contains('shopmode');
+  pm.p.visible=!shopHide;
+  for(const d of DEMO){ const v=d.v;
+    v.p.visible=!shopHide; v.ring.visible=!shopHide;
+    if(T>d.until && d.state!=='meet'){ // สลับทำงาน ↔ พัก แบบสุ่ม; ทำงานเสร็จ = กระโดดฉลอง
+      if(d.state==='work'){ d.state='idle'; if(Math.random()<0.6) cheer(d,true); d.until=T+rnd(2,4); }
+      else { d.state='work'; d.until=T+rnd(5,10); } }
+    if(d.state==='meet' && T>d.until){ d.state='work'; d.until=T+rnd(4,8); }
+    const ph=T+d.phase, working=d.state==='work';
+    let aL,aR,hx,hy,py=0,k=10;
+    if(working){ aL=-1.1+Math.sin(T*14+d.phase)*0.25; aR=-1.1+Math.cos(T*14+d.phase)*0.25; hy=Math.sin(ph*0.7)*0.12; hx=0.12; py=Math.abs(Math.sin(T*7))*0.02; k=18; }
+    else if(d.state==='meet'){ aL=-0.3; aR=-0.6+Math.sin(T*4)*0.4; hx=Math.sin(T*5)*0.12; hy=0.9; }   // หันไปคุยกับ PM
+    else { const st=Math.max(0,Math.sin(ph*0.5)-0.85)/0.15; aL=-0.15-st*2.7; aR=-0.15-st*2.7; hy=Math.sin(ph*0.6)*0.6*(1-st); hx=-0.05-st*0.25; k=6; }
+    const ct=v.cheerT?nowS()-v.cheerT:9;
+    if(ct<1.1){ const j=Math.sin(Math.min(1,ct/0.55)*Math.PI); py=j*0.45; aL=-2.9+Math.sin(ct*18)*0.2; aR=-2.9-Math.sin(ct*18)*0.2; hx=-0.25; k=22; }
+    v.armL.rotation.x=damp(v.armL.rotation.x,aL,k,dt); v.armR.rotation.x=damp(v.armR.rotation.x,aR,k,dt);
+    v.headG.rotation.x=damp(v.headG.rotation.x,hx,k,dt); v.headG.rotation.y=damp(v.headG.rotation.y,hy,k,dt);
+    v.p.position.y=ct<1.1?py:damp(v.p.position.y,py,k,dt);
+    v.body.scale.set(1,1+Math.sin(T*2.2+d.phase)*0.025,1); blink(v,T);
+    v.glow.material.color.setHex(working?ROLES[d.role].hex:0x444444);
+    v.scr.material.color.setHex(working?0xffffff:0x2a2f3a);
+    if(working) v.scr.material.map.offset.y+=dt*0.06;
+  }
+  // PM เดินไปเช็กงานทีละโต๊ะ แล้วคุยสั้น ๆ
+  if(T>demoPMNext){ demoFocus=pick(DEMO.filter(d=>d!==demoFocus)); pmTarget.set(demoFocus.slot.x+1.6,0,demoFocus.slot.z+0.2); demoPMNext=T+rnd(5,8); demoFocus.talked=false; }
+  if(demoFocus&&!demoFocus.talked&&pm.p.position.distanceTo(pmTarget)<0.12){ demoFocus.talked=true; demoFocus.state='meet'; demoFocus.until=T+2.6; }
+  if(!cam) return;
+  // กล้องแพนซ้าย-ขวาช้า ๆ และเลื่อนฉากหลบแผงเลือกด่านด้านขวา
+  const wide=innerWidth>980, az=0.78+Math.sin(T*0.08)*0.28, zm=wide?1.18:1.05;
+  const shift=wide?Math.min(4.6,(480/innerWidth)*20)/zm:0;
+  camAz=damp(camAz,az,2,dt); camEl=damp(camEl,0.6,2,dt); camZoom=damp(camZoom,zm,2,dt);
+  const gx=Math.cos(camAz)*shift, gz=-Math.sin(camAz)*shift;
+  // จอแคบ: แผงอยู่ล่าง → ดันห้องขึ้นไปครึ่งบนของจอ
+  const half=Math.max(8.2,12.6/(innerWidth/innerHeight))/zm, gy=wide?0.6:0.6-(half*0.5)/Math.cos(0.6);
+  camTarget.set(damp(camTarget.x,gx,2,dt),damp(camTarget.y,gy,2,dt),damp(camTarget.z,0.4+gz,2,dt));
+  updateProjection(); placeCamera();
+}
+function setMenu(on){
+  menuOn=on; document.body.classList.toggle('menumode',on);
+  DEMO.forEach(d=>{ d.v.g.visible=on; });
+  if(S) S.members.forEach(m=>{ m.v.g.visible=!on; });
+  if(on){ demoPMNext=0; }
+  else { camTween={t:new THREE.Vector3(0,0.6,0.4),z:1,az:0.78,el:0.62}; }
+}
 
 // camera
 function updateProjection(){
@@ -1111,14 +1221,16 @@ function endGame(reason){
   if(S.otTime>5) L2.unshift('ใช้ OT รวม '+S.otTime.toFixed(1)+' วัน — ได้ความเร็วแลกกับความเครียดและค่าใช้จ่ายที่เพิ่มขึ้น');
   if(!L2.length) L2.push('บริหารได้ราบรื่นมาก! ลองเล่นด่านที่ยากขึ้นเพื่อเจอ dependency และความเสี่ยงที่ซับซ้อนกว่าเดิม');
   const row=(n,v)=>`<span>${n}</span><div class="bar"><i style="width:${v}%"></i></div><span>${Math.round(v)}</span>`;
-  $('#endBody').innerHTML=`
+  $('#endBody').innerHTML=`<div class="endcols"><div class="endL">
    <div class="endtop"><div class="grade" style="background:${gcol}">${grade}</div><div><h2>${title}</h2><p style="margin:4px 0">${sub}</p><p style="font-family:Kanit;font-size:22px;font-weight:700">คะแนนรวม ${Math.round(total)}/100</p></div></div>
    ${starHTML}
-   ${burndownHTML()}
    <div class="sc">${row('Scope ที่ส่งมอบ',completion)}${row('ตรงเวลา',time)}${row('การคุมงบ',budgetS)}${row('คุณภาพ',qual)}${row('ลูกค้าพอใจ',S.stake)}${row('ขวัญทีม',mor)}</div>
    <div class="facts"><span>💰 งบเหลือ ${fmt(S.money)}</span><span>🐞 บั๊ก ${S.bugs}</span><span>😵 Burnout ${S.burnouts}</span><span>✂️ ตัด scope ${S.cuts}</span><span>📅 เลื่อน ${S.extensions}</span><span>📝 CR ${S.crs}</span><span>🔥 OT ${S.otTime.toFixed(1)} วัน</span></div>
+   </div><div class="endR">
+   ${burndownHTML()}
    <div class="lessons"><h3>💡 บทเรียนจากโปรเจกต์นี้</h3><ul>${L2.slice(0,7).map(s=>`<li>${s}</li>`).join('')}</ul></div>
-   <button class="big" id="again">เล่นด่านนี้อีกครั้ง</button> <button class="big alt" id="menu">เลือกด่าน</button> <button class="big alt" id="toShop">🏢 อัปเกรดออฟฟิศ</button>`;
+   </div></div>
+   <div class="endbtns"><button class="big" id="again">เล่นด่านนี้อีกครั้ง</button> <button class="big alt" id="menu">เลือกด่าน</button> <button class="big alt" id="toShop">🏢 อัปเกรดออฟฟิศ</button></div>`;
   wireBurndown();
   $('#end').classList.remove('hide'); Snd.play(reason==='done'?'win':'lose');
   $('#again').onclick=()=>{ $('#end').classList.add('hide'); newGame(S.li); };
@@ -1395,21 +1507,28 @@ function animate(){
     uiAcc+=dt; if(uiAcc>0.12||S._dirty){ uiAcc=0; updateUI(); }
   }
   // PM walk
-  const d=tmpV.copy(pmTarget).sub(pm.p.position); d.y=0; const dist=d.length();
+  const desks=liveDesks(), key=pmTarget.x.toFixed(2)+','+pmTarget.z.toFixed(2)+'|'+desks.map(g=>g.position.x+':'+g.position.z).join(';');
+  if(key!==pmPathKey){ pmPathKey=key; pmPath=findPath(pm.p.position,pmTarget,deskBlocker(desks)); }
+  while(pmPath.length>1&&Math.hypot(pmPath[0].x-pm.p.position.x,pmPath[0].z-pm.p.position.z)<0.15) pmPath.shift();
+  const wp=pmPath[0]||pmTarget;
+  const d=tmpV.copy(wp).sub(pm.p.position); d.y=0; const dist=d.length();
   if(dist>0.08){
     d.normalize();
-    const sp=Math.min(4.2,0.8+dist*2.2);                          // เร่งออกตัว / ชะลอก่อนถึง
+    const rem=dist+pmPath.reduce((a,p,i)=>i?a+Math.hypot(p.x-pmPath[i-1].x,p.z-pmPath[i-1].z):a,0);
+    const sp=Math.min(4.2,0.8+rem*2.2);                           // เร่งออกตัว / ชะลอก่อนถึง (คิดจากระยะที่เหลือทั้งเส้นทาง)
     pm.p.position.addScaledVector(d,Math.min(dist,dt*sp));
     pmFace(Math.atan2(d.x,d.z),dt);
     pm.p.position.y=Math.abs(Math.sin(T*12))*0.08;
     pm.armL.rotation.x=Math.sin(T*12)*0.6; pm.armR.rotation.x=-Math.sin(T*12)*0.3-0.4;
   } else {
     pm.p.position.y=damp(pm.p.position.y,0,12,dt); pm.armL.rotation.x=damp(pm.armL.rotation.x,0,8,dt); pm.armR.rotation.x=damp(pm.armR.rotation.x,-0.5,8,dt);
-    if(S&&S.selMember){ const s=S.selMember.slot; pmFace(Math.atan2(s.x-pm.p.position.x,(s.z-1)-pm.p.position.z),dt); }
+    if(menuOn&&demoFocus&&demoFocus.talked){ const s=demoFocus.slot; pmFace(Math.atan2(s.x-pm.p.position.x,(s.z-1)-pm.p.position.z),dt); }
+    else if(S&&S.selMember){ const s=S.selMember.slot; pmFace(Math.atan2(s.x-pm.p.position.x,(s.z-1)-pm.p.position.z),dt); }
   }
   pm.body.scale.set(1,1+Math.sin(T*2)*0.02,1); blink(pm,T);
   stepConfetti(dt);
   if(S){ const hr=9+(S.t%1)*9; clockM.rotation.z=-(hr%1)*Math.PI*2; clockH.rotation.z=-(hr/12)*Math.PI*2; }
+  if(menuOn){ camTween=null; animDemo(dt,T,true); }
   if(camTween){ const k=1-Math.exp(-6*dt);
     camTarget.lerp(camTween.t,k); camZoom+=(camTween.z-camZoom)*k; camAz+=(camTween.az-camAz)*k; camEl+=(camTween.el-camEl)*k;
     updateProjection(); placeCamera();
@@ -1506,12 +1625,13 @@ $('#setBtn').onclick=openPause;
 addEventListener('keydown',e=>{ if(e.code!=='Escape'||!S) return;
   if($('#pauseSet')&&!$('#modal').classList.contains('hide')) $('#pResume').click(); else openPause(); });
 function setTab(t){
+  curTab=t;
   document.querySelectorAll('.tab[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   $('#levels').style.display=t==='levels'?'':'none'; $('#shopPane').style.display=t==='shop'?'':'none';
   $('#setPane').style.display=t==='settings'?'':'none'; $('#guidePane').style.display=t==='guide'?'':'none'; if(t==='settings') renderSettings();
   $('#start').classList.toggle('shop',t==='shop');
   document.body.classList.toggle('shopmode',t==='shop');
-  pm.p.visible=t!=='shop'; if(S) S.members.forEach(m=>{ m.v.p.visible=t!=='shop'; m.v.ring.visible=t!=='shop'; });
+  pm.p.visible=t!=='shop'; if(S&&!menuOn) S.members.forEach(m=>{ m.v.p.visible=t!=='shop'; m.v.ring.visible=t!=='shop'; });
   if(t==='shop') renderShop();
   // กล้องเลื่อนนุ่ม ๆ ไปมุมใหม่ แทนการตัดภาพ
   camTween = t==='shop' ? {t:new THREE.Vector3(innerWidth>980?-3.2:0,0.6,0.4),z:innerWidth>980?1.15:1,az:0.78,el:0.62}
@@ -1529,8 +1649,9 @@ function showStart(tab){
    <h3>${L.name}</h3><p>${L.desc}</p><div class="spec"><span>👥 ${L.team.length} คน</span><span>📋 ${L.tasks.length} งาน</span><span>⏳ ${L.days} วัน</span><span>💰 ${fmtK(L.budget)}</span></div>
    <div class="lvh" style="margin-top:6px"><span class="stars3">${[0,1,2].map(i=>(SAVE.stars[L.id]||0)&(1<<i)?'<b>★</b>':'★').join('')}</span><span class="best" style="margin:0">${best[L.id]?'🏆 '+best[L.id]:''}</span></div>
    <div class="objs">${starLabels(L).map((l,i)=>`<div class="${(SAVE.stars[L.id]||0)&(1<<i)?'got':''}">⭐ ${l}</div>`).join('')}</div></button>`).join('');
-  $('#levels').querySelectorAll('button.lv').forEach(b=>b.onclick=()=>{ setTab('levels'); $('#start').classList.add('hide'); newGame(+b.dataset.li); });
+  $('#levels').querySelectorAll('button.lv').forEach(b=>b.onclick=()=>{ setTab('levels'); $('#start').classList.add('hide'); setMenu(false); newGame(+b.dataset.li); });
   $('#start').classList.remove('hide');
+  setMenu(true);
   setTab(tab||'levels');
 }
 drawWhiteboard();

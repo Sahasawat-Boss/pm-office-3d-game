@@ -167,6 +167,18 @@ body.shopmode #top,body.shopmode #board,body.shopmode #side,body.shopmode #actio
 .pips i{width:16px;height:6px;border-radius:3px;background:#1d243322}
 .pips i.on{background:var(--teal)}
 .buy{border:2.5px solid var(--ink);background:var(--yellow);border-radius:10px;padding:6px 10px;font-family:'Kanit';font-weight:700;font-size:14px;white-space:nowrap}
+.opt{display:flex;align-items:center;gap:12px;justify-content:space-between;border:2.5px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fff}
+.opt h4{margin:0;font-family:'Kanit';font-size:15px}
+.opt .ud{font-size:12px;opacity:.7;margin-top:2px}
+.opt.danger{border-color:var(--red,#e5484d);background:#fff5f5}
+.tgl{min-width:64px;border:2.5px solid var(--ink);border-radius:99px;padding:5px 12px;font-family:'Kanit';font-weight:700;font-size:13px;background:#eee;white-space:nowrap}
+.tgl.on{background:var(--teal);color:#fff}
+.tgl.rst{background:#fff;color:var(--red,#e5484d);border-color:var(--red,#e5484d)}
+.tgl.rst.armed{background:var(--red,#e5484d);color:#fff;animation:bob .6s ease-in-out infinite}
+.seg{display:flex;border:2.5px solid var(--ink);border-radius:10px;overflow:hidden;flex-shrink:0}
+.seg button{border:0;background:#fff;padding:5px 12px;font-family:'Kanit';font-weight:600;font-size:13px}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button.on{background:var(--ink);color:#fff}
 .buy:disabled{background:#eee;opacity:.6;cursor:not-allowed}
 #objBox{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
 .obj{font-size:11px;border:1.5px solid #1d243355;border-radius:99px;padding:1px 8px;background:#fff}

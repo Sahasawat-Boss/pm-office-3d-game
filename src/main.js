@@ -4,7 +4,12 @@ import { $, clamp, rnd, rndInt, pick, fmt, fmtK } from './utils.js';
 import { ROLES, PRIW, LEVELS } from './data/levels.js';
 import { Snd } from './audio.js';
 
-const DAY_SEC = 4.5;
+/* ================= SETTINGS (แยก key จาก save — Reset Progress ไม่ล้างค่าตั้ง) ================= */
+const OPT_KEY='pmoffice3d-opt';
+const OPT=Object.assign({pace:'normal',autoPull:true,shadows:true,autoPause:true,idleSnd:true},(()=>{ try{ return JSON.parse(localStorage.getItem(OPT_KEY)||'{}'); }catch(e){ return {}; } })());
+function saveOpt(){ try{ localStorage.setItem(OPT_KEY,JSON.stringify(OPT)); }catch(e){} }
+const PACE={slow:{sec:6.5,th:'ช้า'},normal:{sec:4.5,th:'ปกติ'},fast:{sec:3,th:'เร็ว'}};
+const daySec=()=>(PACE[OPT.pace]||PACE.normal).sec;
 
 /* ================= SAVE / STARS / UPGRADES ================= */
 const SAVE_KEY='pmoffice3d-save';
@@ -53,7 +58,7 @@ syncSoundBtns();
 const canvas = $('#c');
 const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = OPT.shadows;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-10,10,10,-10,0.1,200);
@@ -419,7 +424,7 @@ function newGame(li){
     members:[], tasks:L.tasks.map(t=>Object.assign({},t,{dep:t.dep||[],progress:0,status:'todo',riskSum:0})),
     feats:L.feats.slice(), log:[], lessons:[], used:{}, nextEvent:rndInt(L.ev[0],L.ev[1]), lastDoneT:0,
     selTask:null, selMember:null, mode:null, burnouts:0, extensions:0, cuts:0, freelancers:0, lunchReady:0,
-    ended:false, modal:false, bugs:0, idleWaste:0, crs:0, autoPull:true, _dirty:true };
+    ended:false, modal:false, bugs:0, idleWaste:0, crs:0, autoPull:OPT.autoPull, _dirty:true };
   L.team.forEach(p=>addMember(Object.assign({},p)));
   $('#projName').textContent = L.name; Snd.tempo=1;
   S.hist.push(snap(0));
@@ -485,6 +490,7 @@ function setSpeed(sp){
   $('.speed button[data-sp="1"]').classList.toggle('pulse', sp===0 && S.t===0);
 }
 document.querySelectorAll('.speed button[data-sp]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.sp));
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&OPT.autoPause&&S&&!S.ended&&S.speed){ setSpeed(0); hint('⏸️ หยุดเกมให้อัตโนมัติตอนสลับหน้าต่าง กด ▶ เพื่อเล่นต่อ',false,3000); } });
 addEventListener('keydown',e=>{ if(e.code==='Space'&&S&&!S.modal&&!S.ended&&$('#start').classList.contains('hide')){ e.preventDefault(); setSpeed(S.speed?0:1);} });
 
 /* ---------- actions ---------- */
@@ -627,7 +633,7 @@ function sim(dd){
       m.stress += (3+(S.ot?8:0)+(mis?1.5:0))*dd*(1-0.12*ul('chair'));
       if(t.progress>=t.effort) completeTask(t,m);
     } else { ns='idle'; m.stress-=10*dd*(1+0.25*ul('coffee')); if(S.autoPull && pullFor(m)) ns='work'; else if(freeTask) S.idleWaste+=dd; }
-    if(ns!==m.state){ if(ns==='idle'&&m.state!=='idle'&&performance.now()-(S._idleSnd||0)>700){ S._idleSnd=performance.now(); Snd.play('idle'); } m.state=ns; }
+    if(ns!==m.state){ if(ns==='idle'&&m.state!=='idle'&&OPT.idleSnd&&performance.now()-(S._idleSnd||0)>700){ S._idleSnd=performance.now(); Snd.play('idle'); } m.state=ns; }
     if(m.stress>75) m.morale-=5*dd; else if(m.stress<35) m.morale+=1.5*dd;
     m.morale+=0.8*ul('garden')*dd;
     m.stress=clamp(m.stress,0,100); m.morale=clamp(m.morale,0,100);
@@ -1058,7 +1064,7 @@ const cGreen=new THREE.Color(0x3ecf8e), cYel=new THREE.Color(0xffc53d), cRed=new
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),0.1), T=clock.elapsedTime;
-  if(S && !S.ended && !S.modal && S.speed>0) sim(dt*S.speed/DAY_SEC);
+  if(S && !S.ended && !S.modal && S.speed>0) sim(dt*S.speed/daySec());
   if(S){
     for(const m of S.members){
       const v=m.v;
@@ -1129,9 +1135,44 @@ function renderShop(){
   $('#shop').querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{ const id=b.dataset.up, l=ul(id), cost=UCOST[l]; if(l>=3||SAVE.coins<cost) return;
     SAVE.coins-=cost; SAVE.up[id]=l+1; persist(); buildUpgradeDecor(); Snd.play('hire'); renderShop(); });
 }
+function setShadows(on){
+  renderer.shadowMap.enabled=on;
+  scene.traverse(o=>{ if(o.material) [].concat(o.material).forEach(mt=>mt.needsUpdate=true); });
+}
+function renderSettings(){
+  const tg=(k,on,label,sub)=>`<div class="opt"><div><h4>${label}</h4><div class="ud">${sub}</div></div><button class="tgl ${on?'on':''}" data-opt="${k}">${on?'เปิด':'ปิด'}</button></div>`;
+  const nStars=LEVELS.reduce((a,L)=>a+popc(SAVE.stars[L.id]||0),0), nClear=LEVELS.filter(L=>SAVE.best[L.id]).length;
+  $('#setPane').innerHTML=`<div class="shopgrid">
+    <div class="opt"><div><h4>⏱️ ความเร็วเกม</h4><div class="ud">1 วันในเกม = ${daySec()} วินาที (ที่ความเร็ว 1x)</div></div>
+      <div class="seg">${Object.entries(PACE).map(([k,p])=>`<button data-pace="${k}" class="${OPT.pace===k?'on':''}">${p.th}</button>`).join('')}</div></div>
+    ${tg('sfx',Snd.sfx,'🔊 เสียงประกอบ','เสียงคลิก แจกงาน งานเสร็จ เหตุการณ์')}
+    ${tg('mus',Snd.mus,'🎵 เพลงพื้นหลัง','เพลง lo-fi ระหว่างเล่น')}
+    ${tg('idleSnd',OPT.idleSnd,'🔔 เสียงเตือนคนว่าง','ดังเมื่อมีสมาชิกทำงานเสร็จและไม่มีงานต่อ')}
+    ${tg('autoPull',OPT.autoPull,'🔁 หยิบงานเองตั้งแต่เริ่มด่าน','ปิดถ้าอยากฝึกแจกงานเองทั้งหมด (สลับได้ระหว่างเล่น)')}
+    ${tg('autoPause',OPT.autoPause,'⏸️ หยุดเกมเมื่อสลับหน้าต่าง','กันเวลาเดินตอนไม่ได้ดูจอ')}
+    ${tg('shadows',OPT.shadows,'🌗 เงาในฉาก 3D','ปิดเพื่อให้ลื่นขึ้นบนเครื่องสเปกต่ำ / มือถือ')}
+    <div class="opt danger"><div><h4>🗑️ รีเซ็ตความคืบหน้า</h4><div class="ud">ลบเหรียญ 🪙 ${SAVE.coins}, ดาว ${nStars} ดวง, ผ่านแล้ว ${nClear} ด่าน และอัปเกรดออฟฟิศทั้งหมด — ค่าตั้งในหน้านี้ไม่ถูกลบ</div></div>
+      <button class="tgl rst" id="resetBtn">รีเซ็ต</button></div>
+  </div>`;
+  $('#setPane').querySelectorAll('[data-pace]').forEach(b=>b.onclick=()=>{ OPT.pace=b.dataset.pace; saveOpt(); renderSettings(); });
+  $('#setPane').querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{ const k=b.dataset.opt;
+    if(k==='sfx'){ Snd.init(); Snd.setSfx(!Snd.sfx); syncSoundBtns(); }
+    else if(k==='mus'){ Snd.init(); Snd.setMus(!Snd.mus); syncSoundBtns(); }
+    else { OPT[k]=!OPT[k]; saveOpt(); if(k==='shadows') setShadows(OPT.shadows); }
+    renderSettings(); });
+  const rb=$('#resetBtn'); let armed=false;
+  rb.onclick=()=>{
+    if(!armed){ armed=true; rb.textContent='กดอีกครั้งเพื่อยืนยัน'; rb.classList.add('armed'); setTimeout(()=>{ if(rb.isConnected){ armed=false; rb.textContent='รีเซ็ต'; rb.classList.remove('armed'); } },3500); return; }
+    SAVE={coins:0,stars:{},up:{},best:{}}; persist();
+    LEVELS.forEach(L=>{ try{ localStorage.removeItem('pmoffice3d-best-'+L.id); }catch(e){} });
+    buildUpgradeDecor(); Snd.play('cut'); showStart('settings');
+    hint('🗑️ รีเซ็ตความคืบหน้าแล้ว เริ่มใหม่จากศูนย์',false,2600);
+  };
+}
 function setTab(t){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   $('#levels').style.display=t==='levels'?'':'none'; $('#shopPane').style.display=t==='shop'?'':'none';
+  $('#setPane').style.display=t==='settings'?'':'none'; if(t==='settings') renderSettings();
   $('#start').classList.toggle('shop',t==='shop');
   document.body.classList.toggle('shopmode',t==='shop');
   pm.p.visible=t!=='shop'; if(S) S.members.forEach(m=>{ m.v.p.visible=t!=='shop'; m.v.ring.visible=t!=='shop'; });
